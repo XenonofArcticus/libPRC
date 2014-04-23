@@ -1,6 +1,6 @@
 
-#ifndef __PRC_EXPORT_H__
-#define __PRC_EXPORT_H__ 1
+#ifndef __prc_export_h__
+#define __prc_export_h__ 1
 
 
 #if defined( _MSC_VER ) || defined( __CYGWIN__ ) || defined( __MINGW32__ ) || defined( __BCPLUSPLUS__ ) || defined( __MWERKS__ )
@@ -16,5 +16,5 @@
 #endif
 
 
-// __PRC_EXPORT_H__
+// __prc_export_h__
 #endif

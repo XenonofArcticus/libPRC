@@ -3,6 +3,9 @@
 #define __prc_file_h__ 1
 
 
+#include <Export.h>
+
+
 namespace prc {
 
 
@@ -13,7 +16,7 @@ class Node;
 \brief TBD
 \details TBD
 */
-class File
+class PRC_EXPORT File
 {
 public:
     File();

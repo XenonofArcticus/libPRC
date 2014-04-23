@@ -1,5 +1,5 @@
-// add_directory( libPRC )
+add_subdirectory( libPRC )
 
-if( OSG_FOUND )
-    add_directory( osgdb_prc )
+if( OPENSCENEGRAPH_FOUND )
+    add_subdirectory( osgdb_prc )
 endif()
