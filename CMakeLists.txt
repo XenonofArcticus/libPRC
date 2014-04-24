@@ -40,5 +40,25 @@ endif()
 # By default, build shared libraries.
 set( BUILD_SHARED_LIBS ON CACHE BOOL "Build shared or static libs" )
 
+if( WIN32 )
+    # Common debug postfix for Windows.
+    set( CMAKE_DEBUG_POSTFIX d )
+endif()
+
+
 
 add_subdirectory( src )
+
+
+
+#
+# Install pdb files for Debug and RelWithDebInfo builds
+if( MSVC )
+    install(
+        DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/\${CMAKE_INSTALL_CONFIG_NAME}/
+        DESTINATION lib
+        USE_SOURCE_PERMISSIONS
+        COMPONENT libPRC
+        FILES_MATCHING PATTERN "*.pdb"
+    )
+endif()

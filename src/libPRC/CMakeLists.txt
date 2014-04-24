@@ -1,9 +1,14 @@
+
+set( LIB_PUBLIC_HEADERS
+    Export.h
+    libPRC.h
+    PRCFile.h
+    PRCNode.h
+)
+
 _addLibrary( libPRC
     libPRC.cpp
-    libPRC.h
-    Export.h
     PRCFile.cpp
-    PRCFile.h
     PRCNode.cpp
-    PRCNode.h
+    ${LIB_PUBLIC_HEADERS}
 )

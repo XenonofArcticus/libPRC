@@ -24,6 +24,9 @@ macro( _addLibrary TRGTNAME )
     )
 
     set_target_properties( ${TRGTNAME} PROPERTIES PROJECT_LABEL "Lib ${TRGTNAME}" )
+
+    set( _libName ${TRGTNAME} )
+    include( ModuleInstall REQUIRED )
 endmacro()
 
 macro( _addOSGPlugin TRGTNAME )
@@ -45,4 +48,7 @@ macro( _addOSGPlugin TRGTNAME )
     )
 
     set_target_properties( ${TRGTNAME} PROPERTIES PROJECT_LABEL "Plugin ${TRGTNAME}" )
+
+    set( _libName ${TRGTNAME} )
+    include( ModuleInstall REQUIRED )
 endmacro()
