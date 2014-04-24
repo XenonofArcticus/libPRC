@@ -22,6 +22,18 @@ public:
 
     WriteResult writeNode( const osg::Node& node, const std::string& fileName, const Options* opt=NULL ) const
     {
+        std::ofstream ostr( fileName.c_str(),
+            std::ios_base::out | std::ios_base::binary );
+        if( ostr.bad() )
+            return( "Failed to open std::ofstream for " + fileName );
+
+        WriteResult writeResult( writeNode( node, ostr, opt ) );
+        ostr.close();
+
+        return( writeResult );
+    }
+    WriteResult writeNode( const osg::Node& node, std::ostream& ostr, const Options* opt=NULL ) const
+    {
 #ifdef PRC_USE_ASYMPTOTE
         return( "Not yet implemented." );
 #else
