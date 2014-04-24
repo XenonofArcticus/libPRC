@@ -4,13 +4,15 @@
 #include <libPRC.h>
 #include <PRCFile.h>
 
+#include "OSG2PRC.h"
+
 
 class ReaderWriterPRC : public osgDB::ReaderWriter
 {
 public:
     ReaderWriterPRC()
     {
-        supportsExtension( "prc", "PRC model format" );
+        supportsExtension( "prc", "Adobe PRC (Product Representation Conpact)" );
     }
 
     WriteResult writeNode( const osg::Node& node, const std::string& fileName, const Options* opt=NULL ) const
@@ -19,7 +21,9 @@ public:
         if( prcFile == NULL )
             return( "prc::file() returned NULL." );
 
-        // TBD
+        osg::Node* nonConstNode( const_cast< osg::Node* >( &node ) );
+        OSG2PRC osg2prc;
+        nonConstNode->accept( osg2prc );
 
         if( !( prc::close( prcFile ) ) )
             return( "prc::close() returned false." );
