@@ -36,5 +36,9 @@ else()
     set( PRC_LIBRARY libPRC )
 endif()
 
+#
+# By default, build shared libraries.
+set( BUILD_SHARED_LIBS ON CACHE BOOL "Build shared or static libs" )
+
 
 add_subdirectory( src )
