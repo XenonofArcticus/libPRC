@@ -35,7 +35,18 @@ public:
     WriteResult writeNode( const osg::Node& node, std::ostream& ostr, const Options* opt=NULL ) const
     {
 #ifdef PRC_USE_ASYMPTOTE
-        return( "Not yet implemented." );
+        oPRCFile* prcFile( new oPRCFile( ostr ) );
+        if( prcFile == NULL )
+            return( "NULL prcFile." );
+
+        osg::Node* nonConstNode( const_cast< osg::Node* >( &node ) );
+        OSG2PRC osg2prc;
+        nonConstNode->accept( osg2prc );
+
+        if( !( prcFile->finish() ) )
+            return( "prcFile::finish() returned false." );
+
+        return( osgDB::ReaderWriter::WriteResult::FILE_SAVED );
 #else
         prc::File* prcFile( prc::open( fileName.c_str(), "w" ) );
         if( prcFile == NULL )
