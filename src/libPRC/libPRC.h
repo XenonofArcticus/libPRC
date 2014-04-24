@@ -27,7 +27,7 @@ PRC_EXPORT File* open( const char* fileName, const char* opt );
 \detauls Returns true on success. Returns false if the file
 can not be closed, or if \c prcFile is not a pointer to a
 valid prc::File object. */
-PRC_EXPORT bool close( File* preFile );
+PRC_EXPORT bool close( File* prcFile );
 
 
 // namespace prc

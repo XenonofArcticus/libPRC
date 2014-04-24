@@ -25,12 +25,19 @@ File* open( const char* fileName, const char* opt )
     // file fptr = fopen ...
     // File* prcFile( new File( fptr )
     // return( prcFile );
+    File* prcFile( new File() );
 
-    return( NULL );
+    return( prcFile );
 }
 
-bool close( File* preFile )
+bool close( File* prcFile )
 {
+    if( prcFile != NULL )
+    {
+        delete( prcFile );
+        return( true );
+    }
+
     // If prcFile was opened for writing
     //   Write data to file
     // close the fptr.
