@@ -24,5 +24,15 @@ find_package( ZLIB REQUIRED )
 set( _osgComponents osgGA osgText osgViewer osgSim osgDB osgUtil osg OpenThreads )
 find_package( OpenSceneGraph 2.8.5 COMPONENTS ${_osgComponents} )
 
+option( PRC_USE_ASYMPTOTE "Set to ON to use Asymptote instead of libPRC (testing/dev only)." ON )
+if( PRC_USE_ASYMPTOTE )
+    add_definitions( -DPRC_USE_ASYMPTOTE )
+    set( PRC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/src/asymptote )
+    set( PRC_LIBRARY asymptote )
+else()
+    set( PRC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/src/libPRC )
+    set( PRC_LIBRARY libPRC )
+endif()
+
 
 add_subdirectory( src )

@@ -1,4 +1,4 @@
-_addLibrary( asymptote
+_addLibrary( asymptote FORCE_STATIC
     PRC.h
     PRCbitStream.cc
     PRCbitStream.h
