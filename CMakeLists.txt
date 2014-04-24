@@ -12,10 +12,16 @@ include( CMakeMacros )
 
 
 
-set( _osgComponents 
-    osgGA osgText osgViewer osgSim osgDB osgUtil osg OpenThreads
-)
+#
+# Required ZLIB dependency.
+# Set ZLIB_ROOT (env or cmake) as hint, if necessary.
+find_package( ZLIB REQUIRED )
 
+#
+# Optional OpenSceneGraph. If not found, the osgdb_prc plugin
+# library will not be built.
+# Set OSG_DIR (env or cmake) as hint, if necessary.
+set( _osgComponents osgGA osgText osgViewer osgSim osgDB osgUtil osg OpenThreads )
 find_package( OpenSceneGraph 2.8.5 COMPONENTS ${_osgComponents} )
 
 

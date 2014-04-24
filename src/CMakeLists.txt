@@ -1,3 +1,5 @@
+add_subdirectory( asymptote )
+
 add_subdirectory( libPRC )
 
 if( OPENSCENEGRAPH_FOUND )
