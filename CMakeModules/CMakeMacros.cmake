@@ -23,7 +23,7 @@ macro( _addLibrary TRGTNAME )
         ${ZLIB_LIBRARY}
     )
 
-    set_target_properties( ${TRGTNAME} PROPERTIES PROJECT_LABEL "Plugin ${TRGTNAME}" )
+    set_target_properties( ${TRGTNAME} PROPERTIES PROJECT_LABEL "Lib ${TRGTNAME}" )
 endmacro()
 
 macro( _addOSGPlugin TRGTNAME )
