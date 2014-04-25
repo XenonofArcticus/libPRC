@@ -133,10 +133,75 @@ void OSG2PRC::apply( const osg::Geometry* geom )
     for( unsigned int idx=0; idx < geom->getNumPrimitiveSets(); ++idx )
     {
         const osg::PrimitiveSet* ps( geom->getPrimitiveSet( idx ) );
-        // TBD DrawArrays, DrawElementsUInt, etc.
-        std::cout << "TBD: Add PrimitiveSet to PRC" << std::endl;
+        switch( ps->getType() ) {
+        case osg::PrimitiveSet::DrawArraysPrimitiveType:
+        {
+            processDrawArrays( static_cast< const osg::DrawArrays* >( ps ) );
+            break;
+        }
+        case osg::PrimitiveSet::DrawArrayLengthsPrimitiveType:
+        {
+            processDrawArrayLengths( static_cast< const osg::DrawArrayLengths* >( ps ) );
+            break;
+        }
+        case osg::PrimitiveSet::DrawElementsUBytePrimitiveType:
+        {
+            osg::ref_ptr< osg::DrawElementsUInt > deui( convertDrawElements(
+                static_cast< const osg::DrawElementsUByte* >( ps ) ) );
+            processDrawElements( deui.get() );
+            break;
+        }
+        case osg::PrimitiveSet::DrawElementsUShortPrimitiveType:
+        {
+            osg::ref_ptr< osg::DrawElementsUInt > deui( convertDrawElements(
+                static_cast< const osg::DrawElementsUShort* >( ps ) ) );
+            processDrawElements( deui.get() );
+            break;
+        }
+        case osg::PrimitiveSet::DrawElementsUIntPrimitiveType:
+        {
+            processDrawElements( static_cast< const osg::DrawElementsUInt* >( ps ) );
+            break;
+        }
+        }
     }
 }
+
+void OSG2PRC::processDrawArrays( const osg::DrawArrays* da )
+{
+    std::cerr << "DrawArrays not yet implemented." << std::endl;
+}
+void OSG2PRC::processDrawArrayLengths( const osg::DrawArrayLengths* dal )
+{
+    std::cerr << "DrawArrayLengths not yet implemented." << std::endl;
+}
+void OSG2PRC::processDrawElements( const osg::DrawElementsUInt* deui )
+{
+    std::cerr << "DrawElements not yet implemented." << std::endl;
+}
+osg::DrawElementsUInt* OSG2PRC::convertDrawElements( const osg::DrawElementsUByte* deub )
+{
+    osg::ref_ptr< osg::DrawElementsUInt > deui( new osg::DrawElementsUInt() );
+
+    deui->setMode( deub->getMode() );
+    deui->setNumInstances( deub->getNumInstances() );
+    for( unsigned char idx=0; idx< deub->size(); ++idx )
+        deui->push_back( (unsigned int) idx );
+
+    return( deui.release() );
+}
+osg::DrawElementsUInt* OSG2PRC::convertDrawElements( const osg::DrawElementsUShort* deus )
+{
+    osg::ref_ptr< osg::DrawElementsUInt > deui( new osg::DrawElementsUInt() );
+
+    deui->setMode( deus->getMode() );
+    deui->setNumInstances( deus->getNumInstances() );
+    for( unsigned short idx=0; idx< deus->size(); ++idx )
+        deui->push_back( (unsigned int) idx );
+
+    return( deui.release() );
+}
+
 
 void OSG2PRC::processNewNode( const std::string& name )
 {

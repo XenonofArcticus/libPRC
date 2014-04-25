@@ -13,6 +13,11 @@ namespace osg {
     class Geode;
     class Geometry;
     class StateSet;
+    class DrawArrays;
+    class DrawArrayLengths;
+    class DrawElementsUByte;
+    class DrawElementsUShort;
+    class DrawElementsUInt;
 }
 
 
@@ -40,6 +45,12 @@ protected:
     void processNewNode( const std::string& name );
     void processTransformNode( const std::string& name, const osg::Matrix& matrix );
 	void finishNode();
+
+    static void processDrawArrays( const osg::DrawArrays* da );
+    static void processDrawArrayLengths( const osg::DrawArrayLengths* dal );
+    static void processDrawElements( const osg::DrawElementsUInt* deui );
+    static osg::DrawElementsUInt* convertDrawElements( const osg::DrawElementsUByte* deub );
+    static osg::DrawElementsUInt* convertDrawElements( const osg::DrawElementsUShort* deus );
 
 protected:
 #ifdef PRC_USE_ASYMPTOTE
