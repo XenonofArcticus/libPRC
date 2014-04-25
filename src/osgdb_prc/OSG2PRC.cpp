@@ -73,6 +73,8 @@ void OSG2PRC::apply( osg::Geode& geode )
     }
 
     traverse( geode );
+
+    finishNode();
 }
 
 void OSG2PRC::apply( const osg::StateSet* stateSet )
