@@ -16,9 +16,9 @@ OSG2PRC::OSG2PRC()
 }
 
 #ifdef PRC_USE_ASYMPTOTE
-OSG2PRC::OSG2PRC(oPRCFile* prcFile)
-	: osg::NodeVisitor( osg::NodeVisitor::TRAVERSE_ALL_CHILDREN ),
-	_prcFile( prcFile )
+OSG2PRC::OSG2PRC( oPRCFile* prcFile )
+  : osg::NodeVisitor( osg::NodeVisitor::TRAVERSE_ALL_CHILDREN ),
+    _prcFile( prcFile )
 {
 }
 #endif
@@ -143,7 +143,11 @@ void OSG2PRC::processTransformNode( const std::string& name, const osg::Matrix& 
 {
     std::cout << "TBD: Add matrix to PRC" << std::endl;
 
-	// TODO: need a double mat[4][4]
+	// need a double mat[4][4]
+    matrix.ptr(); // <- returns double*. 
+
+    // Brian -- don't begingroup here, as the calling function
+    // has already called this.
 	//_prcFile->begingroup( name.c_str(), NULL,  (const double *)matrix._mat);
 }
 void OSG2PRC::finishNode()

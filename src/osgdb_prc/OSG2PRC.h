@@ -25,7 +25,7 @@ class OSG2PRC : public osg::NodeVisitor
 public:
     OSG2PRC();
 #ifdef PRC_USE_ASYMPTOTE
-	OSG2PRC(oPRCFile* prcFile);
+	OSG2PRC( oPRCFile* prcFile );
 #endif
     virtual ~OSG2PRC();
 
