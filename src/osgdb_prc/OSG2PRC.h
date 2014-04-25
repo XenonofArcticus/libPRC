@@ -23,12 +23,15 @@ public:
     virtual ~OSG2PRC();
 
     virtual void apply( osg::Node& node );
-    virtual void apply( osg::MatrixTransform& mt );
+    virtual void apply( osg::Transform& trans );
     virtual void apply( osg::Geode& geode );
 
 protected:
     void apply( const osg::StateSet* stateSet );
     void apply( const osg::Geometry* geom );
+
+    void processNewNode( const std::string& name );
+    void processTransform( const osg::Matrix& matrix );
 };
 
 

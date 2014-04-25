@@ -1,9 +1,10 @@
 
 #include "osg2prc.h"
 
-#include <osg/MatrixTransform>
+#include <osg/Transform>
 #include <osg/Geode>
 #include <osg/StateSet>
+#include <osg/Material>
 #include <osg/Geometry>
 
 #include <iostream>
@@ -20,25 +21,34 @@ OSG2PRC::~OSG2PRC()
 
 void OSG2PRC::apply( osg::Node& node )
 {
-    std::cout << "Node" << std::endl;
+    std::cout << "Found osg::Node" << std::endl;
+
+    processNewNode( node.getName() );
 
     if( node.getStateSet() != NULL )
         apply( node.getStateSet() );
 
     traverse( node );
 }
-void OSG2PRC::apply( osg::MatrixTransform& mt )
+void OSG2PRC::apply( osg::Transform& trans )
 {
-    std::cout << "MatrixTransform" << std::endl;
+    std::cout << "Found osg::Transform" << std::endl;
 
-    if( mt.getStateSet() != NULL )
-        apply( mt.getStateSet() );
+    processNewNode( trans.getName() );
+    osg::Matrix m;
+    trans.computeLocalToWorldMatrix( m, NULL );
+    processTransform( m );
 
-    traverse( mt );
+    if( trans.getStateSet() != NULL )
+        apply( trans.getStateSet() );
+
+    traverse( trans );
 }
 void OSG2PRC::apply( osg::Geode& geode )
 {
-    std::cout << "Geode" << std::endl;
+    std::cout << "Found osg::Geode" << std::endl;
+
+    processNewNode( geode.getName() );
 
     if( geode.getStateSet() != NULL )
         apply( geode.getStateSet() );
@@ -55,9 +65,53 @@ void OSG2PRC::apply( osg::Geode& geode )
 
 void OSG2PRC::apply( const osg::StateSet* stateSet )
 {
-    std::cout << "StateSet" << std::endl;
+    std::cout << "Found osg::StateSet" << std::endl;
+
+    const osg::StateAttribute* sa( stateSet->getAttribute( osg::StateAttribute::MATERIAL ) );
+    if( sa != NULL )
+    {
+        const osg::Material* mat( static_cast< const osg::Material* >( sa ) );
+        std::cout << "TBD: Add material to PRC" << std::endl;
+    }
 }
 void OSG2PRC::apply( const osg::Geometry* geom )
 {
-    std::cout << "Geometry" << std::endl;
+    std::cout << "Found osg::Geometry" << std::endl;
+
+    const osg::Array* array( geom->getVertexArray() );
+    if( array->getType() != osg::Array::Vec3ArrayType )
+    {
+        std::cerr << "Unsupported array type." << std::endl;
+        return;
+    }
+    const osg::Vec3Array* vertices( static_cast< const osg::Vec3Array* >( array ) );
+    std::cout << "TBD: Add vertex array to PRC, size " << array->getNumElements() << std::endl;
+
+    array = geom->getNormalArray();
+    if( array != NULL )
+    {
+        if( array->getType() != osg::Array::Vec3ArrayType )
+        {
+            std::cerr << "Unsupported array type." << std::endl;
+            return;
+        }
+        const osg::Vec3Array* normals( static_cast< const osg::Vec3Array* >( array ) );
+        std::cout << "TBD: Add normals array to PRC, size " << array->getNumElements() << std::endl;
+    }
+
+    for( unsigned int idx=0; idx < geom->getNumPrimitiveSets(); ++idx )
+    {
+        const osg::PrimitiveSet* ps( geom->getPrimitiveSet( idx ) );
+        // TBD DrawArrays, DrawElementsUInt, etc.
+        std::cout << "TBD: Add PrimitiveSet to PRC" << std::endl;
+    }
+}
+
+void OSG2PRC::processNewNode( const std::string& name )
+{
+    std::cout << "TBD: Add new node (with name " << name << ") to PRC" << std::endl;
+}
+void OSG2PRC::processTransform( const osg::Matrix& matrix )
+{
+    std::cout << "TBD: Add matrix to PRC" << std::endl;
 }
