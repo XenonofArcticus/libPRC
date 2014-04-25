@@ -146,12 +146,7 @@ void OSG2PRC::processTransformNode( const std::string& name, const osg::Matrix& 
 {
     std::cout << "TBD: Add matrix to PRC" << std::endl;
 
-	// need a double mat[4][4]
-    matrix.ptr(); // <- returns double*. 
-
-    // Brian -- don't begingroup here, as the calling function
-    // has already called this.
-	//_prcFile->begingroup( name.c_str(), NULL,  (const double *)matrix._mat);
+	_prcFile->begingroup( name.c_str(), NULL, matrix.ptr());
 }
 void OSG2PRC::finishNode()
 {
