@@ -1,3 +1,4 @@
+
 macro( _addLibrary TRGTNAME )
     # Check to see if we are forcing a static library.
     set( _optionsPlusFiles ${ARGN} )
@@ -24,9 +25,21 @@ macro( _addLibrary TRGTNAME )
     )
 
     set_target_properties( ${TRGTNAME} PROPERTIES PROJECT_LABEL "Lib ${TRGTNAME}" )
+    source_group( "Header Files" REGULAR_EXPRESSION *.h )
 
     set( _libName ${TRGTNAME} )
     include( ModuleInstall REQUIRED )
+    install(
+        DIRECTORY .
+        DESTINATION include/${TRGTNAME}
+        USE_SOURCE_PERMISSIONS
+        FILES_MATCHING 
+        PATTERN "*.h"
+        PATTERN ".txt" EXCLUDE
+        PATTERN ".cpp" EXCLUDE
+        PATTERN ".cxx" EXCLUDE
+        PATTERN ".cc" EXCLUDE
+    )
 endmacro()
 
 macro( _addOSGPlugin TRGTNAME )
@@ -48,6 +61,7 @@ macro( _addOSGPlugin TRGTNAME )
     )
 
     set_target_properties( ${TRGTNAME} PROPERTIES PROJECT_LABEL "Plugin ${TRGTNAME}" )
+    source_group( "Header Files" REGULAR_EXPRESSION *.h )
 
     set( _libName ${TRGTNAME} )
     include( ModuleInstall REQUIRED )

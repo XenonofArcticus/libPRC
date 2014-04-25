@@ -1,16 +1,12 @@
 
-set( LIB_PUBLIC_HEADERS
-    PRC.h
-    PRCbitStream.h
-    PRCdouble.h
-    oPRCFile.h
-    writePRC.h
-)
-
 _addLibrary( asymptote FORCE_STATIC
+    PRC.h
     PRCbitStream.cc
+    PRCbitStream.h
     PRCdouble.cc
+    PRCdouble.h
     oPRCFile.cc
+    oPRCFile.h
     writePRC.cc
-    ${LIB_PUBLIC_HEADERS}
+    writePRC.h
 )

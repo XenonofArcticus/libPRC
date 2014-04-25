@@ -1,14 +1,10 @@
 
-set( LIB_PUBLIC_HEADERS
-    Export.h
-    libPRC.h
-    PRCFile.h
-    PRCNode.h
-)
-
 _addLibrary( libPRC
+    Export.h
     libPRC.cpp
+    libPRC.h
     PRCFile.cpp
+    PRCFile.h
     PRCNode.cpp
-    ${LIB_PUBLIC_HEADERS}
+    PRCNode.h
 )
