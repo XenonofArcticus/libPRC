@@ -85,24 +85,27 @@ void OSG2PRC::apply( const osg::StateSet* stateSet )
         const osg::Material* mat( static_cast< const osg::Material* >( sa ) );
         std::cout << "TBD: Add material to PRC" << std::endl;
 
+#ifdef PRC_USE_ASYMPTOTE
+        const double alpha( 1. );
+        const osg::Material::Face face( osg::Material::FRONT );
+        PRCmaterial m( colorToPRC( mat->getAmbient( face ) ),
+            colorToPRC( mat->getDiffuse( face ) ),
+            colorToPRC( mat->getEmission( face ) ),
+            colorToPRC( mat->getSpecular( face ) ),
+            alpha, (double)( mat->getShininess( face ) ) );
 
-		// TODO:
-		// note the style index later to apply to geometry
-		/*
-		PRCmaterial materialGreen(
-			RGBAColour(0.0,0.18,0.0),
-			RGBAColour(0.0,0.878431,0.0),
-			RGBAColour(0.0,0.32,0.0),
-			RGBAColour(0.0,0.072,0.0),
-				1.0,0.1);
-		const uint32_t style = _prcFile->addMaterial(materialGreen);
-		*/
-
+        // TODO:
+        // note the style index later to apply to geometry
+        const uint32_t style = _prcFile->addMaterial( m );
+#endif
     }
 }
 void OSG2PRC::apply( const osg::Geometry* geom )
 {
     std::cout << "Found osg::Geometry" << std::endl;
+
+    if( geom->getStateSet() != NULL )
+        apply( geom->getStateSet() );
 
     const osg::Array* array( geom->getVertexArray() );
     if( array->getType() != osg::Array::Vec3ArrayType )

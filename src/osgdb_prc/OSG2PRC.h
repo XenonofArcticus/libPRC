@@ -43,7 +43,15 @@ protected:
 
 protected:
 #ifdef PRC_USE_ASYMPTOTE
+
+    static RGBAColour colorToPRC( const osg::Vec4& osgColor )
+    {
+        return( RGBAColour( osgColor[ 0 ],
+            osgColor[ 1 ],osgColor[ 2 ],osgColor[ 3 ] ) );
+    }
+
 	oPRCFile* _prcFile;
+
 #endif
 };
 
