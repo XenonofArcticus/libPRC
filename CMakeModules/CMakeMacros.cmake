@@ -85,7 +85,5 @@ macro( _addOSGExecutable EXENAME )
     )
 
     set_target_properties( ${EXENAME} PROPERTIES PROJECT_LABEL "Tool ${EXENAME}" )
-    if( WIN32 )
-        set_target_properties( ${TRGTNAME} PROPERTIES DEBUG_POSTFIX d )
-    endif()
+    set_property( TARGET ${EXENAME} PROPERTY DEBUG_OUTPUT_NAME "${EXENAME}${CMAKE_DEBUG_POSTFIX}" )
 endmacro()
