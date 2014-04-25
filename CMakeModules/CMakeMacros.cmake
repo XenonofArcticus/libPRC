@@ -25,7 +25,6 @@ macro( _addLibrary TRGTNAME )
     )
 
     set_target_properties( ${TRGTNAME} PROPERTIES PROJECT_LABEL "Lib ${TRGTNAME}" )
-    source_group( "Header Files" REGULAR_EXPRESSION *.h )
 
     set( _libName ${TRGTNAME} )
     include( ModuleInstall REQUIRED )
@@ -61,8 +60,32 @@ macro( _addOSGPlugin TRGTNAME )
     )
 
     set_target_properties( ${TRGTNAME} PROPERTIES PROJECT_LABEL "Plugin ${TRGTNAME}" )
-    source_group( "Header Files" REGULAR_EXPRESSION *.h )
 
     set( _libName ${TRGTNAME} )
     include( ModuleInstall REQUIRED )
+endmacro()
+
+macro( _addOSGExecutable EXENAME )
+    add_executable( ${EXENAME} ${ARGN} )
+
+    include_directories(
+        ${PRC_INCLUDE_DIR}
+        ${OPENSCENEGRAPH_INCLUDE_DIRS}
+    )
+
+    target_link_libraries( ${EXENAME}
+        ${OPENSCENEGRAPH_LIBRARIES}
+        ${PRC_LIBRARY}
+        ${ZLIB_LIBRARY}
+    )
+
+    install(
+        TARGETS ${EXENAME}
+        RUNTIME DESTINATION bin COMPONENT libosgworks
+    )
+
+    set_target_properties( ${EXENAME} PROPERTIES PROJECT_LABEL "Tool ${EXENAME}" )
+    if( WIN32 )
+        set_target_properties( ${TRGTNAME} PROPERTIES DEBUG_POSTFIX d )
+    endif()
 endmacro()
