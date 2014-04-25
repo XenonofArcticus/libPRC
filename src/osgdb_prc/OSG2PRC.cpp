@@ -84,6 +84,20 @@ void OSG2PRC::apply( const osg::StateSet* stateSet )
     {
         const osg::Material* mat( static_cast< const osg::Material* >( sa ) );
         std::cout << "TBD: Add material to PRC" << std::endl;
+
+
+		// TODO:
+		// note the style index later to apply to geometry
+		/*
+		PRCmaterial materialGreen(
+			RGBAColour(0.0,0.18,0.0),
+			RGBAColour(0.0,0.878431,0.0),
+			RGBAColour(0.0,0.32,0.0),
+			RGBAColour(0.0,0.072,0.0),
+				1.0,0.1);
+		const uint32_t style = _prcFile->addMaterial(materialGreen);
+		*/
+
     }
 }
 void OSG2PRC::apply( const osg::Geometry* geom )
@@ -129,6 +143,7 @@ void OSG2PRC::processTransformNode( const std::string& name, const osg::Matrix& 
 {
     std::cout << "TBD: Add matrix to PRC" << std::endl;
 
+	// TODO: need a double mat[4][4]
 	//_prcFile->begingroup( name.c_str(), NULL,  (const double *)matrix._mat);
 }
 void OSG2PRC::finishNode()
