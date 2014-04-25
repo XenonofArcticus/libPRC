@@ -40,7 +40,7 @@ public:
             return( "NULL prcFile." );
 
         osg::Node* nonConstNode( const_cast< osg::Node* >( &node ) );
-        OSG2PRC osg2prc;
+        OSG2PRC osg2prc( prcFile );
         nonConstNode->accept( osg2prc );
 
         if( !( prcFile->finish() ) )

@@ -14,6 +14,15 @@ OSG2PRC::OSG2PRC()
     : osg::NodeVisitor( osg::NodeVisitor::TRAVERSE_ALL_CHILDREN )
 {
 }
+
+#ifdef PRC_USE_ASYMPTOTE
+OSG2PRC::OSG2PRC(oPRCFile* prcFile)
+	: osg::NodeVisitor( osg::NodeVisitor::TRAVERSE_ALL_CHILDREN ),
+	_prcFile( prcFile )
+{
+}
+#endif
+
 OSG2PRC::~OSG2PRC()
 {
 }
@@ -29,20 +38,23 @@ void OSG2PRC::apply( osg::Node& node )
         apply( node.getStateSet() );
 
     traverse( node );
+
+	finishNode();
 }
 void OSG2PRC::apply( osg::Transform& trans )
 {
     std::cout << "Found osg::Transform" << std::endl;
 
-    processNewNode( trans.getName() );
     osg::Matrix m;
     trans.computeLocalToWorldMatrix( m, NULL );
-    processTransform( m );
+    processTransformNode( trans.getName(), m );
 
     if( trans.getStateSet() != NULL )
         apply( trans.getStateSet() );
 
     traverse( trans );
+
+	finishNode();
 }
 void OSG2PRC::apply( osg::Geode& geode )
 {
@@ -109,9 +121,17 @@ void OSG2PRC::apply( const osg::Geometry* geom )
 
 void OSG2PRC::processNewNode( const std::string& name )
 {
-    std::cout << "TBD: Add new node (with name " << name << ") to PRC" << std::endl;
+	std::cout << "Adding new node (with name " << name << ") to PRC" << std::endl;
+
+	_prcFile->begingroup( name.c_str() );
 }
-void OSG2PRC::processTransform( const osg::Matrix& matrix )
+void OSG2PRC::processTransformNode( const std::string& name, const osg::Matrix& matrix )
 {
     std::cout << "TBD: Add matrix to PRC" << std::endl;
+
+	//_prcFile->begingroup( name.c_str(), NULL,  (const double *)matrix._mat);
+}
+void OSG2PRC::finishNode()
+{
+	_prcFile->endgroup();
 }

@@ -4,6 +4,10 @@
 
 #include <osg\NodeVisitor>
 
+#ifdef PRC_USE_ASYMPTOTE
+#  include <oPRCFile.h>
+#endif
+
 namespace osg {
     class MatrixTransform;
     class Geode;
@@ -20,6 +24,9 @@ class OSG2PRC : public osg::NodeVisitor
 {
 public:
     OSG2PRC();
+#ifdef PRC_USE_ASYMPTOTE
+	OSG2PRC(oPRCFile* prcFile);
+#endif
     virtual ~OSG2PRC();
 
     virtual void apply( osg::Node& node );
@@ -31,7 +38,13 @@ protected:
     void apply( const osg::Geometry* geom );
 
     void processNewNode( const std::string& name );
-    void processTransform( const osg::Matrix& matrix );
+    void processTransformNode( const std::string& name, const osg::Matrix& matrix );
+	void finishNode();
+
+protected:
+#ifdef PRC_USE_ASYMPTOTE
+	oPRCFile* _prcFile;
+#endif
 };
 
 
