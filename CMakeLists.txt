@@ -24,8 +24,14 @@ find_package( ZLIB REQUIRED )
 
 #
 # Optional libharu. If not found, prctopdf will not be built
-# Set ZLIB_ROOT (env or cmake) as hint, if necessary.
-find_package( LIBHARU REQUIRED )
+# Set LIBHARU_ROOT (env or cmake) as hint, if necessary.
+find_package( LIBHARU )
+if( LIBHARU_FOUND AND LIBHARU_STATIC )
+    # If using static libHaru, then we must find and link with PNG.
+    find_package( PNG REQUIRED )
+    # Just append the PNG lib to the libHaru libraries.
+    list( APPEND LIBHARU_LIBRARIES ${PNG_LIBRARY} )
+endif()
 
 #
 # Optional OpenSceneGraph. If not found, the osgdb_prc plugin

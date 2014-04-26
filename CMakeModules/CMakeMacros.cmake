@@ -81,7 +81,30 @@ macro( _addOSGExecutable EXENAME )
 
     install(
         TARGETS ${EXENAME}
-        RUNTIME DESTINATION bin COMPONENT libosgworks
+        RUNTIME DESTINATION bin COMPONENT libprc
+    )
+
+    set_target_properties( ${EXENAME} PROPERTIES PROJECT_LABEL "Tool ${EXENAME}" )
+    set_property( TARGET ${EXENAME} PROPERTY DEBUG_OUTPUT_NAME "${EXENAME}${CMAKE_DEBUG_POSTFIX}" )
+endmacro()
+
+macro( _addHaruExecutable EXENAME )
+    add_executable( ${EXENAME} ${ARGN} )
+
+    include_directories(
+        ${PRC_INCLUDE_DIR}
+        ${LIBHARU_INCLUDE_DIRS}
+    )
+
+    target_link_libraries( ${EXENAME}
+        ${LIBHARU_LIBRARIES}
+        ${PRC_LIBRARY}
+        ${ZLIB_LIBRARY}
+    )
+
+    install(
+        TARGETS ${EXENAME}
+        RUNTIME DESTINATION bin COMPONENT libprc
     )
 
     set_target_properties( ${EXENAME} PROPERTIES PROJECT_LABEL "Tool ${EXENAME}" )
