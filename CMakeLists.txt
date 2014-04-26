@@ -23,6 +23,11 @@ set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
 find_package( ZLIB REQUIRED )
 
 #
+# Optional libharu. If not found, prctopdf will not be built
+# Set ZLIB_ROOT (env or cmake) as hint, if necessary.
+find_package( LIBHARU REQUIRED )
+
+#
 # Optional OpenSceneGraph. If not found, the osgdb_prc plugin
 # library will not be built.
 # Set OSG_DIR (env or cmake) as hint, if necessary.
