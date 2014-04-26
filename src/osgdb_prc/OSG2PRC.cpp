@@ -13,6 +13,7 @@
 OSG2PRC::OSG2PRC()
     : osg::NodeVisitor( osg::NodeVisitor::TRAVERSE_ALL_CHILDREN )
 {
+    addDefaultMaterial();
 }
 
 #ifdef PRC_USE_ASYMPTOTE
@@ -20,6 +21,7 @@ OSG2PRC::OSG2PRC( oPRCFile* prcFile )
   : osg::NodeVisitor( osg::NodeVisitor::TRAVERSE_ALL_CHILDREN ),
     _prcFile( prcFile )
 {
+    addDefaultMaterial();
 }
 #endif
 
@@ -77,6 +79,58 @@ void OSG2PRC::apply( osg::Geode& geode )
     finishNode();
 }
 
+void OSG2PRC::pushStyle()
+{
+    _styleStack.resize( _styleStack.size() + 1 );
+    if( _styleStack.size() > 1 )
+    {
+        // Copy old top of stack to current top of stack.
+        _styleStack[ _styleStack.size() - 1 ] =
+            _styleStack[ _styleStack.size() - 2 ];
+    }
+}
+bool OSG2PRC::popStyle()
+{
+    if( _styleStack.size() > 0 )
+    {
+        _styleStack.resize( _styleStack.size() - 1 );
+        return( true );
+    }
+    return( false );
+}
+void OSG2PRC::setStyle( const uint32_t style )
+{
+    if( _styleStack.size() > 0 )
+        _styleStack[ _styleStack.size() - 1 ] = style;
+}
+uint32_t OSG2PRC::getStyle() const
+{
+    if( _styleStack.size() > 0 )
+        return( _styleStack[ _styleStack.size() - 1 ] );
+    else
+        return( 0 );
+}
+void OSG2PRC::addDefaultMaterial()
+{
+    const osg::Vec4 ambient( 0.f, 0.f, 0.f, 0.f );
+    const osg::Vec4 emissive( 0.f, 0.f, 0.f, 0.f );
+    const osg::Vec4 diffuse( 0.7f, 0.7f, 0.7f, 0.f );
+    const osg::Vec4 specular( 0.3f, 0.3f, 0.3f, 0.f );
+#ifdef PRC_USE_ASYMPTOTE
+    PRCmaterial m( colorToPRC( ambient ),
+        colorToPRC( diffuse ),
+        colorToPRC( emissive ),
+        colorToPRC( specular ),
+        1., 16. );
+
+    const uint32_t style = _prcFile->addMaterial( m );
+    pushStyle();
+    setStyle( style );
+#else
+    // libPRC version
+#endif
+}
+
 void OSG2PRC::apply( const osg::StateSet* stateSet )
 {
     std::cout << "Found osg::StateSet" << std::endl;
@@ -85,21 +139,27 @@ void OSG2PRC::apply( const osg::StateSet* stateSet )
     if( sa != NULL )
     {
         const osg::Material* mat( static_cast< const osg::Material* >( sa ) );
-        std::cout << "TBD: Add material to PRC" << std::endl;
 
+        MaterialStyleMap::iterator styleIt( _styles.find( mat ) );
+        if( styleIt == _styles.end() )
+        {
 #ifdef PRC_USE_ASYMPTOTE
-        const double alpha( 1. );
-        const osg::Material::Face face( osg::Material::FRONT );
-        PRCmaterial m( colorToPRC( mat->getAmbient( face ) ),
-            colorToPRC( mat->getDiffuse( face ) ),
-            colorToPRC( mat->getEmission( face ) ),
-            colorToPRC( mat->getSpecular( face ) ),
-            alpha, (double)( mat->getShininess( face ) ) );
+            const double alpha( 1. );
+            const osg::Material::Face face( osg::Material::FRONT );
+            PRCmaterial m( colorToPRC( mat->getAmbient( face ) ),
+                colorToPRC( mat->getDiffuse( face ) ),
+                colorToPRC( mat->getEmission( face ) ),
+                colorToPRC( mat->getSpecular( face ) ),
+                alpha, (double)( mat->getShininess( face ) ) );
 
-        // TODO:
-        // note the style index later to apply to geometry
-        const uint32_t style = _prcFile->addMaterial( m );
+            const uint32_t style = _prcFile->addMaterial( m );
+            _styles[ mat ] = style;
+            styleIt = _styles.find( mat );
+#else
+            // libPRC version
 #endif
+        }
+        setStyle( styleIt->second );
     }
 }
 void OSG2PRC::apply( const osg::Geometry* geom )
@@ -108,6 +168,8 @@ void OSG2PRC::apply( const osg::Geometry* geom )
 
     if( geom->getStateSet() != NULL )
         apply( geom->getStateSet() );
+
+    std::cout << "Current style: " << getStyle() << std::endl;
 
     const osg::Array* array( geom->getVertexArray() );
     if( array->getType() != osg::Array::Vec3ArrayType )
@@ -208,6 +270,8 @@ void OSG2PRC::processNewNode( const std::string& name )
 	std::cout << "Adding new node (with name " << name << ") to PRC" << std::endl;
 
 	_prcFile->begingroup( name.c_str() );
+
+    pushStyle();
 }
 void OSG2PRC::processTransformNode( const std::string& name, const osg::Matrix& matrix )
 {
@@ -218,4 +282,6 @@ void OSG2PRC::processTransformNode( const std::string& name, const osg::Matrix& 
 void OSG2PRC::finishNode()
 {
 	_prcFile->endgroup();
+
+    popStyle();
 }

@@ -8,11 +8,16 @@
 #  include <oPRCFile.h>
 #endif
 
+#include <vector>
+#include <map>
+
+
 namespace osg {
     class MatrixTransform;
     class Geode;
     class Geometry;
     class StateSet;
+    class Material;
     class DrawArrays;
     class DrawArrayLengths;
     class DrawElementsUByte;
@@ -51,6 +56,16 @@ protected:
     static void processDrawElements( const osg::DrawElementsUInt* deui );
     static osg::DrawElementsUInt* convertDrawElements( const osg::DrawElementsUByte* deub );
     static osg::DrawElementsUInt* convertDrawElements( const osg::DrawElementsUShort* deus );
+
+    typedef std::map< const osg::Material*, uint32_t > MaterialStyleMap;
+    MaterialStyleMap _styles;
+    typedef std::vector< uint32_t > StyleStack;
+    StyleStack _styleStack;
+    void pushStyle();
+    bool popStyle();
+    void setStyle( const uint32_t style );
+    uint32_t getStyle() const;
+    void addDefaultMaterial();
 
 protected:
 #ifdef PRC_USE_ASYMPTOTE
