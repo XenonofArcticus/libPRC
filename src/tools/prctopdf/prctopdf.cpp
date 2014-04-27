@@ -6,16 +6,62 @@
 #include "oPRCFile.h"
 #include "pdf3d.h"
 
-void createTestPrc(const std::string &prcfile);
+bool hasCmd( const char *cmd, int argc, char** argv );
+void outCmdErr();
+int runBasic( int argc, char** argv );
+int runAQuad( int argc, char** argv );
+int runQuad( int argc, char** argv );
+
+void createPdf( const std::string &pdffile, const std::string &prcfile, const std::string &jsfile );
+
+void createPrcAQuad( const std::string &prcfile );
+void createPrcQuad( const std::string &prcfile );
+void createPrcTest( const std::string &prcfile );
+
 
 int main( int argc, char** argv )
 {
+	int ret;
+
+	ret = runAQuad( argc, argv );
+	if (ret >= 0) return( ret );
+
+	ret = runQuad( argc, argv );
+	if (ret >= 0) return( ret );
+
+	ret = runBasic( argc, argv );
+
+	if( ret == -1 )
+	{
+		outCmdErr();
+		return 1;
+	}
+
+	return ret;
+}
+
+bool hasCmd( const char *cmd, int argc, char** argv )
+{
+	for( int i=0; i<argc; i++ )
+	{
+		if (!strcmp(argv[i], cmd)) return true;
+	}
+
+	return false;
+}
+
+void outCmdErr()
+{
+	std::cerr << "prctopdf <pdfjsfile>" << std::endl;
+	std::cerr << "prctopdf <pdfoutfile> <pdfjsfile>" << std::endl;
+	std::cerr << "prctopdf <prcinfile> <pdfoutfile> <pdfjsfile>" << std::endl;
+}
+
+int runBasic( int argc, char** argv )
+{
 	if( argc < 2 || argc > 4 )
 	{
-		std::cerr << "prctopdf <pdfjsfile>" << std::endl;
-		std::cerr << "prctopdf <pdfoutfile> <pdfjsfile>" << std::endl;
-		std::cerr << "prctopdf <prcinfile> <pdfoutfile> <pdfjsfile>" << std::endl;
-		return( 1 );
+		return - 1;
 	}
 
 	std::string prcfile;
@@ -27,14 +73,14 @@ int main( int argc, char** argv )
 		prcfile = "test.prc";
 		pdffile ="test.pdf";
 		jsfile =argv[ 1 ];   
-		createTestPrc( prcfile );
+		createPrcTest( prcfile );
 	}
 	else if( argc == 3 )
 	{
 		prcfile = "test.prc";
 		pdffile = argv[ 1 ];
 		jsfile = argv[ 2 ]; 
-		createTestPrc( prcfile );
+		createPrcTest( prcfile );
 	}
 	else if( argc == 4 )
 	{
@@ -43,14 +89,343 @@ int main( int argc, char** argv )
 		jsfile = argv[ 3 ]; 
 	}
 
-	Pdf3d pdf;
-	pdf.createAdvancedPdf( pdffile.c_str(), prcfile.c_str(), jsfile.c_str() );
+	createPdf( pdffile.c_str(), prcfile.c_str(), jsfile.c_str() );
 
 	return( 0 );
 }
 
+int runAQuad( int argc, char** argv )
+{
+	if (!hasCmd( "-aquad", argc, argv )) return -1;
 
-void createTestPrc(const std::string &prcfile)
+	if( argc != 5 )
+	{
+		outCmdErr();
+		return 1;
+	}
+
+	std::string prcfile( argv[2] );
+	std::string pdffile( argv[3] );
+	std::string jsfile( argv[4] ); 
+
+	createPrcAQuad( prcfile );
+	createPdf( pdffile.c_str(), prcfile.c_str(), jsfile.c_str() );
+	return 0;
+}
+
+void createPrcAQuad( const std::string &prcfile )
+{
+	oPRCFile file(prcfile.c_str());
+	PRCoptions grpopt;
+	grpopt.no_break = true;
+	grpopt.do_break = false;
+	grpopt.tess = true;
+	grpopt.closed = true;
+
+	double t[4][4];
+
+	// create a quad
+	const size_t nP = 4;
+	double P[nP][3] = {{0,0,0},{1,0,0},{1,1,0},{0,1,0}};
+	const size_t nI = 2;
+	uint32_t PI[nI][3] = {{0,1,2},{2,3,0}};
+	const size_t nM = 2;
+	PRCmaterial M[nM];
+	M[0] = PRCmaterial(
+		RGBAColour(0.0,0.0,0.18),
+		RGBAColour(0.0,0.0,0.878431),
+		RGBAColour(0.0,0.0,0.32),
+		RGBAColour(0.0,0.0,0.072),
+		1.0,0.1);
+	M[1] = PRCmaterial(
+		RGBAColour(0.18,0.0,0.0),
+		RGBAColour(0.878431,0.0,0.0),
+		RGBAColour(0.32,0.0,0.0),
+		RGBAColour(0.072,0.0,0.0),
+		0.5,0.1);
+	uint32_t MI[nI] = {0,1};
+	const size_t nN = 2;
+	double N[nN][3] = {{0,0,1},{0,0,-1}};
+	uint32_t NI[nI][3] = {{0,0,0},{0,0,0}};
+
+	const uint32_t nC = 3;
+	RGBAColour C[nC];
+	uint32_t CI[nI][3] = {{0,0,0},{1,1,1}};
+
+	PRCmaterial materialGreen(
+		RGBAColour(0.0,0.18,0.0),
+		RGBAColour(0.0,0.878431,0.0),
+		RGBAColour(0.0,0.32,0.0),
+		RGBAColour(0.0,0.072,0.0),
+		1.0,0.1);
+
+	t[0][0]=1; t[0][1]=0; t[0][2]=0; t[0][3]=0;
+	t[1][0]=0; t[1][1]=1; t[1][2]=0; t[1][3]=0;
+	t[2][0]=0; t[2][1]=0; t[2][2]=1; t[2][3]=-1;
+	t[3][0]=0; t[3][1]=0; t[3][2]=0; t[3][3]=1;
+	file.begingroup("triangles_onecolor_with_normals",&grpopt, (const double *)t);
+	file.addTriangles(nP, P, nI, PI, materialGreen, nN, N, NI, 0, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, 0);
+	file.endgroup();
+
+	file.finish();
+
+	/*
+	oPRCFile file(prcfile.c_str());
+	PRCoptions grpopt;
+	grpopt.no_break = true;
+	grpopt.do_break = false;
+	grpopt.tess = true;
+	grpopt.closed = true;
+
+	double t[4][4];
+
+	const size_t nP = 5;
+	double P[nP][3] = {{0,0,0},{1,0,0},{1,1,0},{0,1,0},{0,2,0}};
+	const size_t nI = 3;
+	uint32_t PI[nI][3] = {{0,1,3},{1,2,3},{3,2,4}};
+	const size_t nM = 2;
+	PRCmaterial M[nM];
+	M[0] = PRCmaterial(
+		RGBAColour(0.0,0.0,0.18),
+		RGBAColour(0.0,0.0,0.878431),
+		RGBAColour(0.0,0.0,0.32),
+		RGBAColour(0.0,0.0,0.072),
+		1.0,0.1);
+	M[1] = PRCmaterial(
+		RGBAColour(0.18,0.0,0.0),
+		RGBAColour(0.878431,0.0,0.0),
+		RGBAColour(0.32,0.0,0.0),
+		RGBAColour(0.072,0.0,0.0),
+		0.5,0.1);
+	uint32_t MI[nI] = {0,1,0};
+	const size_t nN = 2;
+	double N[nN][3] = {{0,0,1},{0,0,-1}};
+	uint32_t NI[nI][3] = {{0,0,0},{0,0,0},{1,1,1}};
+
+	const uint32_t nC = 3;
+	RGBAColour C[nC];
+	uint32_t CI[nI][3] = {{0,0,0},{1,1,1},{1,1,2}};
+
+	PRCmaterial materialGreen(
+		RGBAColour(0.0,0.18,0.0),
+		RGBAColour(0.0,0.878431,0.0),
+		RGBAColour(0.0,0.32,0.0),
+		RGBAColour(0.0,0.072,0.0),
+		1.0,0.1);
+
+	t[0][0]=1; t[0][1]=0; t[0][2]=0; t[0][3]=0;
+	t[1][0]=0; t[1][1]=1; t[1][2]=0; t[1][3]=0;
+	t[2][0]=0; t[2][1]=0; t[2][2]=1; t[2][3]=-1;
+	t[3][0]=0; t[3][1]=0; t[3][2]=0; t[3][3]=1;
+	file.begingroup("triangles_onecolor_with_normals",&grpopt, (const double *)t);
+	file.addTriangles(nP, P, nI, PI, materialGreen, nN, N, NI, 0, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, 0);
+	file.endgroup();
+
+	file.finish();
+	*/
+}
+
+int runQuad( int argc, char** argv )
+{
+	if (!hasCmd( "-quad", argc, argv )) return -1; // not applicable
+
+	if( argc != 5 )
+	{
+		outCmdErr();
+		return 1; // error
+	}
+
+	std::string prcfile( argv[2] );
+	std::string pdffile( argv[3] );
+	std::string jsfile( argv[4] ); 
+
+	createPrcQuad( prcfile );
+	createPdf( pdffile.c_str(), prcfile.c_str(), jsfile.c_str() );
+	return 0; // success
+}
+
+void createPrcQuad( const std::string &prcfile )
+{
+	oPRCFile file(prcfile.c_str());
+	PRCoptions grpopt;
+	grpopt.no_break = true;
+	grpopt.do_break = false;
+	grpopt.tess = true;
+	grpopt.closed = true;
+
+	double t[4][4];
+
+	// create a quad
+	PRC3DTess *tess = new PRC3DTess();
+
+	// add verts
+	const size_t nP = 4;
+	double P[nP][3] = {{0,0,0},{1,0,0},{1,1,0},{0,1,0}};
+	for( int v=0; v<nP; v++ )
+	{
+		for(int i=0; i<3; i++ )
+		{
+			tess->coordinates.push_back( P[v][i] );
+		}
+	}
+
+	// add normals
+	const size_t nN = 4;
+	double N[nN][3] = {{0,0,1},{0,0,1}, {0,0,1}, {0,0,1}};
+	for( int v=0; v<nN; v++ )
+	{
+		for(int i=0; i<3; i++ )
+		{
+			tess->normal_coordinate.push_back( P[v][i] );
+		}
+	}
+
+	// add indexes for 2 triangles
+	int triCount = 2;
+	// add our normal index, then texture, then vert.. no texture coords here though
+	tess->triangulated_index.push_back( 3*0 );
+	tess->triangulated_index.push_back( 3*0 );
+	tess->triangulated_index.push_back( 3*1 );
+	tess->triangulated_index.push_back( 3*1 );
+	tess->triangulated_index.push_back( 3*2 );
+	tess->triangulated_index.push_back( 3*2 );
+	tess->triangulated_index.push_back( 3*2 );
+	tess->triangulated_index.push_back( 3*2 );
+	tess->triangulated_index.push_back( 3*3 );
+	tess->triangulated_index.push_back( 3*3 );
+	tess->triangulated_index.push_back( 3*0 );
+	tess->triangulated_index.push_back( 3*0 );
+
+	bool hasTexCoords = false;
+	PRCTessFace *tessFace = new PRCTessFace();
+	tessFace->number_of_texture_coordinate_indexes = hasTexCoords ? 1 : 0;
+	tessFace->used_entities_flag = hasTexCoords ? PRC_FACETESSDATA_TriangleTextured : PRC_FACETESSDATA_Triangle;
+
+	tessFace->sizes_triangulated.push_back( triCount );
+	tessFace->start_triangulated = 0;
+	tess->addTessFace( tessFace );
+
+	t[0][0]=1; t[0][1]=0; t[0][2]=0; t[0][3]=0;
+	t[1][0]=0; t[1][1]=1; t[1][2]=0; t[1][3]=0;
+	t[2][0]=0; t[2][1]=0; t[2][2]=1; t[2][3]=-1;
+	t[3][0]=0; t[3][1]=0; t[3][2]=0; t[3][3]=1;
+
+	file.begingroup("2_triangle_quad_with_normals",&grpopt, (const double *)t);
+
+	PRCmaterial materialGreen(
+		RGBAColour(0.0,0.18,0.0),
+		RGBAColour(0.0,0.878431,0.0),
+		RGBAColour(0.0,0.32,0.0),
+		RGBAColour(0.0,0.072,0.0),
+		1.0,0.1);
+
+	// lets add the material the tess and then use the mesh
+	const uint32_t mat_index = file.addMaterial( materialGreen );
+	const uint32_t tess_index = file.add3DTess( tess );
+	file.useMesh( tess_index, mat_index );
+
+	file.endgroup();
+
+	file.finish();
+
+	/*
+	oPRCFile file(prcfile.c_str());
+	PRCoptions grpopt;
+	grpopt.no_break = true;
+	grpopt.do_break = false;
+	grpopt.tess = true;
+	grpopt.closed = true;
+
+	double t[4][4];
+
+	const size_t nP = 5;
+	double P[nP][3] = {{0,0,0},{1,0,0},{1,1,0},{0,1,0},{0,2,0}};
+	const size_t nI = 3;
+	uint32_t PI[nI][3] = {{0,1,3},{1,2,3},{3,2,4}};
+	const size_t nM = 2;
+	PRCmaterial M[nM];
+	M[0] = PRCmaterial(
+		RGBAColour(0.0,0.0,0.18),
+		RGBAColour(0.0,0.0,0.878431),
+		RGBAColour(0.0,0.0,0.32),
+		RGBAColour(0.0,0.0,0.072),
+		1.0,0.1);
+	M[1] = PRCmaterial(
+		RGBAColour(0.18,0.0,0.0),
+		RGBAColour(0.878431,0.0,0.0),
+		RGBAColour(0.32,0.0,0.0),
+		RGBAColour(0.072,0.0,0.0),
+		0.5,0.1);
+	uint32_t MI[nI] = {0,1,0};
+	const size_t nN = 2;
+	double N[nN][3] = {{0,0,1},{0,0,-1}};
+	uint32_t NI[nI][3] = {{0,0,0},{0,0,0},{1,1,1}};
+
+	const uint32_t nC = 3;
+	RGBAColour C[nC];
+	uint32_t CI[nI][3] = {{0,0,0},{1,1,1},{1,1,2}};
+
+	PRCmaterial materialGreen(
+		RGBAColour(0.0,0.18,0.0),
+		RGBAColour(0.0,0.878431,0.0),
+		RGBAColour(0.0,0.32,0.0),
+		RGBAColour(0.0,0.072,0.0),
+		1.0,0.1);
+
+	t[0][0]=1; t[0][1]=0; t[0][2]=0; t[0][3]=0;
+	t[1][0]=0; t[1][1]=1; t[1][2]=0; t[1][3]=0;
+	t[2][0]=0; t[2][1]=0; t[2][2]=1; t[2][3]=-1;
+	t[3][0]=0; t[3][1]=0; t[3][2]=0; t[3][3]=1;
+	file.begingroup("triangles_onecolor_with_normals",&grpopt, (const double *)t);
+	file.addTriangles(nP, P, nI, PI, materialGreen, nN, N, NI, 0, NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, 0);
+	file.endgroup();
+
+	file.finish();
+	*/
+}
+
+void createCubePrc(const std::string &prcfile)
+{
+	oPRCFile file(prcfile.c_str());
+
+	PRCmaterial material;
+	material.diffuse.R = 1.0;
+	material.diffuse.G = 1.0;
+	material.diffuse.B = 1.0;
+	material.diffuse.A = 1;;
+	material.specular.R = 1;
+	material.specular.G = 1;
+	material.specular.B = 1;
+	material.specular.A = 1;
+	material.emissive.R = 1;
+	material.emissive.G = 1;
+	material.emissive.B = 1;
+	material.emissive.A = 1;
+	material.ambient.R  = 1;
+	material.ambient.G  = 1;
+	material.ambient.B  = 1;
+	material.ambient.A  = 1;
+	material.alpha      = 1;
+	material.shininess  = 0.1;
+
+	uint32_t idxmat = file.addMaterial(material);
+
+	PRCoptions grpopt;
+	grpopt.no_break = true;
+	grpopt.do_break = false;
+	grpopt.tess = true;
+	grpopt.closed = true;
+
+	file.begingroup("cube", &grpopt);
+
+
+
+	file.endgroup();
+	file.finish();
+
+}
+
+void createPrcTest(const std::string &prcfile)
 {
 	// List of pictures used; keep track of memory allocated to free it in the end
 	// shared pointers or garbage collector may be an alternative
@@ -970,4 +1345,10 @@ void createTestPrc(const std::string &prcfile)
 	delete[] picture2;
 	delete[] picture3;
 	delete[] picture4;
+}
+
+void createPdf( const std::string &pdffile, const std::string &prcfile, const std::string &jsfile )
+{
+	Pdf3d pdf;
+	pdf.createAdvancedPdf( pdffile.c_str(), prcfile.c_str(), jsfile.c_str() );
 }

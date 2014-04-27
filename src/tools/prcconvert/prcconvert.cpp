@@ -13,9 +13,9 @@ int main( int argc, char** argv )
         return( 1 );
     }
 
-    const std::string inFileName( argv[ 1 ] );
+    
+const std::string inFileName( argv[ 1 ] );
     const std::string outFileName( argv[ 2 ] );
-
     osg::ref_ptr< osg::Node > root( osgDB::readNodeFile( inFileName ) );
     if( root == NULL )
     {
