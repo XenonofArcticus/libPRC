@@ -333,10 +333,10 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess *tess, uin
         for( unsigned int idx = first; idx < lastPlusOne; ++idx )
         {
 			if( hasnormals )
-				tess->triangulated_index.push_back( idx );
+				tess->triangulated_index.push_back( 3*idx );
 			if( hasTexCoords )
-				tess->triangulated_index.push_back( idx );
-			tess->triangulated_index.push_back( idx );
+				tess->triangulated_index.push_back( 2*idx );
+			tess->triangulated_index.push_back( 3*idx );
         }
         if( da->getMode() == GL_TRIANGLES )
 			triCount = da->getCount() / 3;
@@ -351,41 +351,41 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess *tess, uin
             // Two triangles, A and B
             //   Triangle A
 			if( hasnormals )
-				tess->triangulated_index.push_back( idx );
+				tess->triangulated_index.push_back( 3*idx );
 			if( hasTexCoords )
-				tess->triangulated_index.push_back( idx );
-			tess->triangulated_index.push_back( idx );
+				tess->triangulated_index.push_back( 2*idx );
+			tess->triangulated_index.push_back( 3*idx );
 
 			if( hasnormals )
-				tess->triangulated_index.push_back( idx+1 );
+				tess->triangulated_index.push_back( 3*(idx+1) );
 			if( hasTexCoords )
-				tess->triangulated_index.push_back( idx+1 );
-			tess->triangulated_index.push_back( idx+1 );
+				tess->triangulated_index.push_back( 2*(idx+1) );
+			tess->triangulated_index.push_back( 3*(idx+1) );
 
 			if( hasnormals )
-				tess->triangulated_index.push_back( idx+3 );
+				tess->triangulated_index.push_back( 3*(idx+3) );
 			if( hasTexCoords )
-				tess->triangulated_index.push_back( idx+3 );
-			tess->triangulated_index.push_back( idx+3 );
+				tess->triangulated_index.push_back( 2*(idx+3) );
+			tess->triangulated_index.push_back( 3*(idx+3) );
 
             //   Triangle B
 			if( hasnormals )
-				tess->triangulated_index.push_back( idx+3 );
+				tess->triangulated_index.push_back( 3*(idx+3) );
 			if( hasTexCoords )
-				tess->triangulated_index.push_back( idx+3 );
-			tess->triangulated_index.push_back( idx+3 );
+				tess->triangulated_index.push_back( 2*(idx+3) );
+			tess->triangulated_index.push_back( 3*(idx+3) );
 
 			if( hasnormals )
-				tess->triangulated_index.push_back( idx+2 );
+				tess->triangulated_index.push_back( 3*(idx+2) );
 			if( hasTexCoords )
-				tess->triangulated_index.push_back( idx+2 );
-			tess->triangulated_index.push_back( idx+2 );
+				tess->triangulated_index.push_back( 2*(idx+2) );
+			tess->triangulated_index.push_back( 3*(idx+2) );
 
 			if( hasnormals )
-				tess->triangulated_index.push_back( idx+4 );
+				tess->triangulated_index.push_back( 3*(idx+4) );
 			if( hasTexCoords )
-				tess->triangulated_index.push_back( idx+4 );
-			tess->triangulated_index.push_back( idx+4 );
+				tess->triangulated_index.push_back( 2*(idx+4) );
+			tess->triangulated_index.push_back( 3*(idx+4) );
 
             idx += 4;
 			triCount += 2;

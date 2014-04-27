@@ -18,6 +18,8 @@ void createPrcAQuad( const std::string &prcfile );
 void createPrcQuad( const std::string &prcfile );
 void createPrcTest( const std::string &prcfile );
 
+// "D:\d\testdata\teapot.prc" "D:\d\testdata\teapot.pdf" "D:\skewmatrix\projects\libPRC\src\tools\prctopdf\s2plot-prc.js"
+// -quad "D:\d\testdata\quad.prc" "D:\d\testdata\quad.pdf" "D:\skewmatrix\projects\libPRC\src\tools\prctopdf\s2plot-prc.js"
 
 int main( int argc, char** argv )
 {
