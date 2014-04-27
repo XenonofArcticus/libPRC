@@ -378,7 +378,7 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess *tess, uin
     }
     default:
         std::cerr << "Unsupported mode " << std::hex << da->getMode() << std::dec << std::endl;
-		delete tessFace;
+		delete tessFace; // we don't need this face object.. destroy it
 		return;
     }
 
@@ -388,7 +388,7 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess *tess, uin
 	tessFace->start_triangulated = curTriCount;
 	tess->addTessFace(tessFace);
 
-	curTriCount += triCount;
+	curTriCount += triCount; // update the triangle count
 }
 void OSG2PRC::processDrawArrayLengths( const osg::DrawArrayLengths* dal )
 {
