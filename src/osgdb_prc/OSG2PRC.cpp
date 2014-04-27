@@ -232,6 +232,53 @@ void OSG2PRC::apply( const osg::Geometry* geom )
 void OSG2PRC::processDrawArrays( const osg::DrawArrays* da )
 {
     std::cerr << "DrawArrays not yet implemented." << std::endl;
+
+    const unsigned int first( da->getFirst() );
+    const unsigned int lastPlusOne( da->getFirst() + da->getCount() );
+    switch( da->getMode() )
+    {
+    case GL_TRIANGLES:
+    {
+        for( unsigned int idx = first; idx+2 < lastPlusOne; )
+        {
+            // Triangle: idx, idx+1, idx+2
+            idx += 3;
+        }
+        break;
+    }
+    case GL_TRIANGLE_FAN:
+    {
+        for( unsigned int idx = first+1; idx+1 < lastPlusOne; )
+        {
+            // Triangle: first, idx, idx+1
+            idx += 1;
+        }
+        break;
+    }
+    case GL_TRIANGLE_STRIP:
+    {
+        for( unsigned int idx = first; idx+2 < lastPlusOne; )
+        {
+            // Triangle: idx, idx+1, idx+2
+            // if( idx+3 < ledtPlusOne
+            //   Triangle: idx+2, idx+1, idx+3
+            idx += 2;
+        }
+        break;
+    }
+    case GL_QUADS:
+    {
+        for( unsigned int idx = first; idx+3 < lastPlusOne; )
+        {
+            // Quad: idx, idx+1, idx+2, idx+3
+            idx += 4;
+        }
+        break;
+    }
+    default:
+        std::cerr << "Unsupported mode " << std::hex << da->getMode() << std::dec << std::endl;
+        break;
+    }
 }
 void OSG2PRC::processDrawArrayLengths( const osg::DrawArrayLengths* dal )
 {
