@@ -330,29 +330,18 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess *tess, uin
     case GL_TRIANGLE_FAN:
     case GL_TRIANGLE_STRIP:
     {
-        for( unsigned int idx = first; idx+2 < lastPlusOne; )
+        for( unsigned int idx = first; idx < lastPlusOne; ++idx )
         {
 			if( hasnormals )
 				tess->triangulated_index.push_back( idx );
 			if( hasTexCoords )
 				tess->triangulated_index.push_back( idx );
 			tess->triangulated_index.push_back( idx );
-
-			if( hasnormals )
-				tess->triangulated_index.push_back( idx+1 );
-			if( hasTexCoords )
-				tess->triangulated_index.push_back( idx+1 );
-			tess->triangulated_index.push_back( idx+1 );
-
-			if( hasnormals )
-				tess->triangulated_index.push_back( idx+2 );
-			if( hasTexCoords )
-				tess->triangulated_index.push_back( idx+2 );
-			tess->triangulated_index.push_back( idx+2 );
-
-            idx += 3;
-			triCount++;
         }
+        if( da->getMode() == GL_TRIANGLES )
+			triCount = da->getCount() / 3;
+        else // strip or fan
+			triCount = ( da->getCount() >= 3 ) ? ( da->getCount() - 2 ) : 0;
         break;
     }
     case GL_QUADS:
