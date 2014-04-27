@@ -400,6 +400,7 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess *tess, uin
 	tessFace->sizes_triangulated.push_back( triCount );
 	tessFace->start_triangulated = curTriCount;
 	tess->addTessFace( tessFace );
+    tess->has_faces = true;
 
 	curTriCount += triCount; // update the triangle count
 }
