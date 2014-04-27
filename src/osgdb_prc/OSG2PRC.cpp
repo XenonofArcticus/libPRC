@@ -291,102 +291,126 @@ PRC3DTess* OSG2PRC::createTess( const osg::Geometry* geom )
 
 void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess *tess, uint32_t &curTriCount )
 {
-    std::cerr << "DrawArrays not yet implemented." << std::endl;
+    std::cout << "Processing DrawArrays." << std::endl;
 
-	bool has_normals = false;	// TODO: deal with normals
-	bool textured = false;		// TODO: deal with textured
+	const bool hasnormals( tess->normal_coordinate.size() > 0 );
+    const bool hasTexCoords( tess->texture_coordinate.size() > 0 );
+
 	PRCTessFace *tessFace = new PRCTessFace();
-	tessFace->number_of_texture_coordinate_indexes = textured ? 1 : 0;
+	tessFace->number_of_texture_coordinate_indexes = hasTexCoords ? 1 : 0;
 
+    // Tell the PRC tess face object what our entity type is.
+    switch( da->getMode() )
+    {
+    case GL_QUADS:
+        // Store quads as triangles.
+    case GL_TRIANGLES:
+		tessFace->used_entities_flag = hasTexCoords ? PRC_FACETESSDATA_TriangleTextured : PRC_FACETESSDATA_Triangle;
+        break;
+    case GL_TRIANGLE_FAN:
+		tessFace->used_entities_flag = hasTexCoords ? PRC_FACETESSDATA_TriangleFanTextured : PRC_FACETESSDATA_TriangleFan;
+        break;
+    case GL_TRIANGLE_STRIP:
+		tessFace->used_entities_flag = hasTexCoords ? PRC_FACETESSDATA_TriangleStripeTextured : PRC_FACETESSDATA_TriangleStripe;
+        break;
+    default:
+        std::cerr << "Unsupported mode " << std::hex << da->getMode() << std::dec << std::endl;
+		delete tessFace; // we don't need this face object.. destroy it
+		return;
+        break;
+    }
+
+    // Add indices to the tess.
 	uint32_t triCount = 0;
     const unsigned int first( da->getFirst() );
     const unsigned int lastPlusOne( da->getFirst() + da->getCount() );
     switch( da->getMode() )
     {
     case GL_TRIANGLES:
+    case GL_TRIANGLE_FAN:
+    case GL_TRIANGLE_STRIP:
     {
-		tessFace->used_entities_flag = textured ? PRC_FACETESSDATA_TriangleTextured : PRC_FACETESSDATA_Triangle;
-
         for( unsigned int idx = first; idx+2 < lastPlusOne; )
         {
-			
-            // Triangle: idx, idx+1, idx+2
+			if( hasnormals )
+				tess->triangulated_index.push_back( idx );
+			if( hasTexCoords )
+				tess->triangulated_index.push_back( idx );
+			tess->triangulated_index.push_back( idx );
 
-			// TODO:
-			/*
-			// triangle vert0 indexs
-			if( has_normals )
-				tess->triangulated_index.push_back( ni0 );
-			if(textured)
-				tess->triangulated_index.push_back( ti0 );
-			tess->triangulated_index.push_back( pi0 );
+			if( hasnormals )
+				tess->triangulated_index.push_back( idx+1 );
+			if( hasTexCoords )
+				tess->triangulated_index.push_back( idx+1 );
+			tess->triangulated_index.push_back( idx+1 );
 
-			// triangle vert1 indexs
-			if( has_normals )
-				tess->triangulated_index.push_back( ni1 );
-			if(textured)
-				tess->triangulated_index.push_back( ti1 );
-			tess->triangulated_index.push_back( pi1 );
-
-			// triangle vert2 indexs
-			if( has_normals )
-				tess->triangulated_index.push_back( ni2 );
-			if(textured)
-				tess->triangulated_index.push_back( ti2 );
-			tess->triangulated_index.push_back( pi2 );
-			*/
+			if( hasnormals )
+				tess->triangulated_index.push_back( idx+2 );
+			if( hasTexCoords )
+				tess->triangulated_index.push_back( idx+2 );
+			tess->triangulated_index.push_back( idx+2 );
 
             idx += 3;
 			triCount++;
         }
         break;
     }
-    case GL_TRIANGLE_FAN:
-    {
-		tessFace->used_entities_flag = textured ? PRC_FACETESSDATA_TriangleFanTextured : PRC_FACETESSDATA_TriangleFan;
-
-        for( unsigned int idx = first+1; idx+1 < lastPlusOne; )
-        {
-            // Triangle: first, idx, idx+1
-            idx += 1;
-        }
-        break;
-    }
-    case GL_TRIANGLE_STRIP:
-    {
-		// assuming STRIP is a STRIP
-		tessFace->used_entities_flag = textured ? PRC_FACETESSDATA_TriangleStripeTextured : PRC_FACETESSDATA_TriangleStripe;
-        for( unsigned int idx = first; idx+2 < lastPlusOne; )
-        {
-            // Triangle: idx, idx+1, idx+2
-            // if( idx+3 < ledtPlusOne
-            //   Triangle: idx+2, idx+1, idx+3
-            idx += 2;
-        }
-        break;
-    }
     case GL_QUADS:
     {
-		// probably just easier to make all triangles, because we can't have multiple fans, so just add the extra index data, 6 indexes for a quad
-		tessFace->used_entities_flag = textured ? PRC_FACETESSDATA_TriangleTextured : PRC_FACETESSDATA_Triangle;
         for( unsigned int idx = first; idx+3 < lastPlusOne; )
         {
-            // Quad: idx, idx+1, idx+2, idx+3
+            // Two triangles, A and B
+            //   Triangle A
+			if( hasnormals )
+				tess->triangulated_index.push_back( idx );
+			if( hasTexCoords )
+				tess->triangulated_index.push_back( idx );
+			tess->triangulated_index.push_back( idx );
+
+			if( hasnormals )
+				tess->triangulated_index.push_back( idx+1 );
+			if( hasTexCoords )
+				tess->triangulated_index.push_back( idx+1 );
+			tess->triangulated_index.push_back( idx+1 );
+
+			if( hasnormals )
+				tess->triangulated_index.push_back( idx+3 );
+			if( hasTexCoords )
+				tess->triangulated_index.push_back( idx+3 );
+			tess->triangulated_index.push_back( idx+3 );
+
+            //   Triangle B
+			if( hasnormals )
+				tess->triangulated_index.push_back( idx+3 );
+			if( hasTexCoords )
+				tess->triangulated_index.push_back( idx+3 );
+			tess->triangulated_index.push_back( idx+3 );
+
+			if( hasnormals )
+				tess->triangulated_index.push_back( idx+2 );
+			if( hasTexCoords )
+				tess->triangulated_index.push_back( idx+2 );
+			tess->triangulated_index.push_back( idx+2 );
+
+			if( hasnormals )
+				tess->triangulated_index.push_back( idx+4 );
+			if( hasTexCoords )
+				tess->triangulated_index.push_back( idx+4 );
+			tess->triangulated_index.push_back( idx+4 );
+
             idx += 4;
+			triCount += 2;
         }
         break;
     }
     default:
-        std::cerr << "Unsupported mode " << std::hex << da->getMode() << std::dec << std::endl;
-		delete tessFace; // we don't need this face object.. destroy it
-		return;
+        break;
     }
 
-
 	// update our face object
-	tessFace->sizes_triangulated.push_back(triCount);
+	tessFace->sizes_triangulated.push_back( triCount );
 	tessFace->start_triangulated = curTriCount;
-	tess->addTessFace(tessFace);
+	tess->addTessFace( tessFace );
 
 	curTriCount += triCount; // update the triangle count
 }
