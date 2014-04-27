@@ -27,9 +27,9 @@ Pdf3d::Pdf3d():
 	_rctop( 0 ), 
 	_rcwidth( 600 ), 
 	_rcheight( 600 ),
-	_bgr( 0 ), 
-	_bgg( 0 ), 
-	_bgb (0 )
+	_bgr( 0.2f ), // OSG default clear color: (.2, .2, .4)
+	_bgg( 0.2f ), 
+	_bgb( 0.4f )
 {
 }
 
