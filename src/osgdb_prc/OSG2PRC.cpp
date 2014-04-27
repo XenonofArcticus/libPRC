@@ -171,34 +171,24 @@ void OSG2PRC::apply( const osg::Geometry* geom )
 
     std::cout << "Current style: " << getStyle() << std::endl;
 
-    const osg::Array* array( geom->getVertexArray() );
-    if( array->getType() != osg::Array::Vec3ArrayType )
-    {
-        std::cerr << "Unsupported array type." << std::endl;
-        return;
-    }
-    const osg::Vec3Array* vertices( static_cast< const osg::Vec3Array* >( array ) );
-    std::cout << "TBD: Add vertex array to PRC, size " << array->getNumElements() << std::endl;
 
-    array = geom->getNormalArray();
-    if( array != NULL )
-    {
-        if( array->getType() != osg::Array::Vec3ArrayType )
-        {
-            std::cerr << "Unsupported array type." << std::endl;
-            return;
-        }
-        const osg::Vec3Array* normals( static_cast< const osg::Vec3Array* >( array ) );
-        std::cout << "TBD: Add normals array to PRC, size " << array->getNumElements() << std::endl;
-    }
+	PRC3DTess *tess = createTess( geom );
+	if( tess == NULL )
+	{
+		std::cerr << "Failed to create 3D Tess object." << std::endl;
+		return;
+	}
 
-    for( unsigned int idx=0; idx < geom->getNumPrimitiveSets(); ++idx )
+	// NOTE: this is used on the face object for starting triangle index
+	//		 int works in triangles which each actually have 3 indexs for each vert, but we only worry about triangle count
+	uint32_t curTriCount = 0; 
+	for( unsigned int idx=0; idx < geom->getNumPrimitiveSets(); ++idx )
     {
         const osg::PrimitiveSet* ps( geom->getPrimitiveSet( idx ) );
         switch( ps->getType() ) {
         case osg::PrimitiveSet::DrawArraysPrimitiveType:
         {
-            processDrawArrays( static_cast< const osg::DrawArrays* >( ps ) );
+            processDrawArrays( static_cast< const osg::DrawArrays* >( ps ), tess, curTriCount );
             break;
         }
         case osg::PrimitiveSet::DrawArrayLengthsPrimitiveType:
@@ -227,27 +217,134 @@ void OSG2PRC::apply( const osg::Geometry* geom )
         }
         }
     }
+
+	// add the tess mesh then use it
+	const uint32_t tess_index = _prcFile->add3DTess( tess );
+	_prcFile->useMesh( tess_index, getStyle() );
 }
 
-void OSG2PRC::processDrawArrays( const osg::DrawArrays* da )
+/////////////////////////////////////////////////////////////////////////////////////////////
+PRC3DTess* OSG2PRC::createTess( const osg::Geometry* geom )
+{
+	PRC3DTess *tess = new PRC3DTess();
+
+	const osg::Array* array( geom->getVertexArray() );
+    if( array->getType() != osg::Array::Vec3ArrayType )
+    {
+        std::cerr << "Unsupported array type." << std::endl;
+		delete tess;
+        return NULL;
+    }
+    const osg::Vec3Array* vertices( static_cast< const osg::Vec3Array* >( array ) );
+    std::cout << "Adding vertex array to PRC, size " << array->getNumElements() << std::endl;
+
+	tess->coordinates.reserve( vertices->size()*3 );
+	for( uint32_t i=0; i<vertices->size(); i++ )
+	{
+		osg::Vec3d v = vertices->at( i );
+		tess->coordinates.push_back(v.x());
+		tess->coordinates.push_back(v.y());
+		tess->coordinates.push_back(v.z());
+	}
+
+	array = geom->getNormalArray();
+    if( array != NULL )
+    {
+        if( array->getType() != osg::Array::Vec3ArrayType )
+        {
+            std::cerr << "Unsupported array type." << std::endl;
+			delete tess;
+            return NULL;
+        }
+        const osg::Vec3Array* normals( static_cast< const osg::Vec3Array* >( array ) );
+        std::cout << "Adding normals array to PRC, size " << array->getNumElements() << std::endl;
+
+		tess->normal_coordinate.reserve( normals->size()*3 );
+		for( uint32_t i=0; i<normals->size(); i++ )
+		{
+			osg::Vec3d v = normals->at( i );
+			tess->normal_coordinate.push_back(v.x());
+			tess->normal_coordinate.push_back(v.y());
+			tess->normal_coordinate.push_back(v.z());
+		}
+    }
+	else
+	{
+		// not sure what this is for no normals
+		tess->crease_angle = 25.8419;  // arccos(0.9), default found in Acrobat output; 
+	}
+
+	// TODO: support texture coordinates
+	/*
+	if( textured )
+	{
+		tess->texture_coordinate.reserve(2*nT);
+		for(uint32_t i=0; i<nT; i++)
+		{
+			tess->texture_coordinate.push_back(T[i][0]);
+			tess->texture_coordinate.push_back(T[i][1]);
+		}
+	}
+	*/
+	return tess;
+}
+
+void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess *tess, uint32_t &curTriCount )
 {
     std::cerr << "DrawArrays not yet implemented." << std::endl;
 
+	bool has_normals = false;	// TODO: deal with normals
+	bool textured = false;		// TODO: deal with textured
+	PRCTessFace *tessFace = new PRCTessFace();
+	tessFace->number_of_texture_coordinate_indexes = textured ? 1 : 0;
+
+	uint32_t triCount = 0;
     const unsigned int first( da->getFirst() );
     const unsigned int lastPlusOne( da->getFirst() + da->getCount() );
     switch( da->getMode() )
     {
     case GL_TRIANGLES:
     {
+		tessFace->used_entities_flag = textured ? PRC_FACETESSDATA_TriangleTextured : PRC_FACETESSDATA_Triangle;
+
         for( unsigned int idx = first; idx+2 < lastPlusOne; )
         {
+			
             // Triangle: idx, idx+1, idx+2
+
+			// TODO:
+			/*
+			// triangle vert0 indexs
+			if( has_normals )
+				tess->triangulated_index.push_back( ni0 );
+			if(textured)
+				tess->triangulated_index.push_back( ti0 );
+			tess->triangulated_index.push_back( pi0 );
+
+			// triangle vert1 indexs
+			if( has_normals )
+				tess->triangulated_index.push_back( ni1 );
+			if(textured)
+				tess->triangulated_index.push_back( ti1 );
+			tess->triangulated_index.push_back( pi1 );
+
+			// triangle vert2 indexs
+			if( has_normals )
+				tess->triangulated_index.push_back( ni2 );
+			if(textured)
+				tess->triangulated_index.push_back( ti2 );
+			tess->triangulated_index.push_back( pi2 );
+			*/
+
             idx += 3;
+			triCount++;
         }
         break;
     }
     case GL_TRIANGLE_FAN:
     {
+		tessFace->used_entities_flag = textured ? PRC_FACETESSDATA_TriangleFanTextured : PRC_FACETESSDATA_TriangleFan;
+
         for( unsigned int idx = first+1; idx+1 < lastPlusOne; )
         {
             // Triangle: first, idx, idx+1
@@ -257,6 +354,8 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da )
     }
     case GL_TRIANGLE_STRIP:
     {
+		// assuming STRIP is a STRIP
+		tessFace->used_entities_flag = textured ? PRC_FACETESSDATA_TriangleStripeTextured : PRC_FACETESSDATA_TriangleStripe;
         for( unsigned int idx = first; idx+2 < lastPlusOne; )
         {
             // Triangle: idx, idx+1, idx+2
@@ -268,6 +367,8 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da )
     }
     case GL_QUADS:
     {
+		// probably just easier to make all triangles, because we can't have multiple fans, so just add the extra index data, 6 indexes for a quad
+		tessFace->used_entities_flag = textured ? PRC_FACETESSDATA_TriangleTextured : PRC_FACETESSDATA_Triangle;
         for( unsigned int idx = first; idx+3 < lastPlusOne; )
         {
             // Quad: idx, idx+1, idx+2, idx+3
@@ -277,8 +378,17 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da )
     }
     default:
         std::cerr << "Unsupported mode " << std::hex << da->getMode() << std::dec << std::endl;
-        break;
+		delete tessFace;
+		return;
     }
+
+
+	// update our face object
+	tessFace->sizes_triangulated.push_back(triCount);
+	tessFace->start_triangulated = curTriCount;
+	tess->addTessFace(tessFace);
+
+	curTriCount += triCount;
 }
 void OSG2PRC::processDrawArrayLengths( const osg::DrawArrayLengths* dal )
 {

@@ -1600,12 +1600,12 @@ uint32_t oPRCFile::createTriangleMesh(uint32_t nP, const double P[][3], uint32_t
     tess->crease_angle = ca;
   if(textured)
   {
-    tess->texture_coordinate.reserve(2*nT);
-  for(uint32_t i=0; i<nT; i++)
-  {
-    tess->texture_coordinate.push_back(T[i][0]);
-    tess->texture_coordinate.push_back(T[i][1]);
-  }
+		tess->texture_coordinate.reserve(2*nT);
+		for(uint32_t i=0; i<nT; i++)
+		{
+			tess->texture_coordinate.push_back(T[i][0]);
+			tess->texture_coordinate.push_back(T[i][1]);
+		}
   }
   tess->triangulated_index.reserve(3*nI+(has_normals?3:0)*nI+(textured?3:0)*nI);
   for(uint32_t i=0; i<nI; i++)

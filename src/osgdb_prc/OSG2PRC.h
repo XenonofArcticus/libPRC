@@ -51,7 +51,7 @@ protected:
     void processTransformNode( const std::string& name, const osg::Matrix& matrix );
 	void finishNode();
 
-    static void processDrawArrays( const osg::DrawArrays* da );
+    static void processDrawArrays( const osg::DrawArrays* da, PRC3DTess *tess, uint32_t &curTriCount );
     static void processDrawArrayLengths( const osg::DrawArrayLengths* dal );
     static void processDrawElements( const osg::DrawElementsUInt* deui );
     static osg::DrawElementsUInt* convertDrawElements( const osg::DrawElementsUByte* deub );
@@ -66,6 +66,9 @@ protected:
     void setStyle( const uint32_t style );
     uint32_t getStyle() const;
     void addDefaultMaterial();
+
+
+	PRC3DTess* createTess( const osg::Geometry* geom );
 
 protected:
 #ifdef PRC_USE_ASYMPTOTE
