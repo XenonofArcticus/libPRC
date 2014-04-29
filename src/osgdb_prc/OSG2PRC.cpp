@@ -241,7 +241,7 @@ PRC3DTess* OSG2PRC::createTess( const osg::Geometry* geom )
 	tess->coordinates.reserve( vertices->size()*3 );
 	for( uint32_t i=0; i<vertices->size(); i++ )
 	{
-		osg::Vec3d v = vertices->at( i );
+		const osg::Vec3& v( vertices->at( i ) );
 		tess->coordinates.push_back(v.x());
 		tess->coordinates.push_back(v.y());
 		tess->coordinates.push_back(v.z());
@@ -262,7 +262,7 @@ PRC3DTess* OSG2PRC::createTess( const osg::Geometry* geom )
 		tess->normal_coordinate.reserve( normals->size()*3 );
 		for( uint32_t i=0; i<normals->size(); i++ )
 		{
-			osg::Vec3d v = normals->at( i );
+			const osg::Vec3& v( normals->at( i ) );
 			tess->normal_coordinate.push_back(v.x());
 			tess->normal_coordinate.push_back(v.y());
 			tess->normal_coordinate.push_back(v.z());
