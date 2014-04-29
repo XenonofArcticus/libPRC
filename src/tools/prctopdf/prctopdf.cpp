@@ -13,6 +13,7 @@ int runAQuad( int argc, char** argv );
 int runQuad( int argc, char** argv );
 int runTriStrip( int argc, char** argv );
 int runTriStripMulti( int argc, char** argv );
+int runTriQuad( int argc, char** argv );
 
 void createPdf( const std::string &pdffile, const std::string &prcfile, const std::string &jsfile );
 
@@ -20,6 +21,7 @@ void createPrcAQuad( const std::string &prcfile );
 void createPrcQuad( const std::string &prcfile );
 void createPrcTriStrip( const std::string &prcfile );
 void createPrcTriStripMulti( const std::string &prcfile );
+void createPrcTriQuad( const std::string &prcfile );
 void createPrcTest( const std::string &prcfile );
 
 
@@ -27,6 +29,7 @@ void createPrcTest( const std::string &prcfile );
 // -quad "D:\d\testdata\quad.prc" "D:\d\testdata\quad.pdf" "D:\skewmatrix\projects\libPRC\src\tools\prctopdf\s2plot-prc.js"
 // -tristrip "D:\d\testdata\tristrip.prc" "D:\d\testdata\tristrip.pdf" "D:\skewmatrix\projects\libPRC\src\tools\prctopdf\s2plot-prc.js"
 // -tristripm "D:\d\testdata\tristripm.prc" "D:\d\testdata\tristripm.pdf" "D:\skewmatrix\projects\libPRC\src\tools\prctopdf\s2plot-prc.js"
+// -triquad "D:\d\testdata\triquad.prc" "D:\d\testdata\triquad.pdf" "D:\skewmatrix\projects\libPRC\src\tools\prctopdf\s2plot-prc.js"
 
 int main( int argc, char** argv )
 {
@@ -42,6 +45,9 @@ int main( int argc, char** argv )
 	if (ret >= 0) return( ret );
 
 	ret = runTriStripMulti( argc, argv );
+	if (ret >= 0) return( ret );
+
+	ret = runTriQuad( argc, argv );
 	if (ret >= 0) return( ret );
 
 	ret = runBasic( argc, argv );
@@ -624,6 +630,163 @@ void createPrcTriStripMulti( const std::string &prcfile )
 	tessFace->sizes_triangulated.push_back( 1 );
 	tessFace->sizes_triangulated.push_back( 6 );
 	tessFace->start_triangulated = 4;
+	tessFace->line_attributes.push_back(mat_index_red);
+	tess->addTessFace( tessFace );
+
+	const uint32_t tess_index = file.add3DTess( tess );
+	file.useMesh( tess_index, mat_index_green );
+
+	file.endgroup();
+
+	file.finish();
+}
+
+
+int runTriQuad( int argc, char** argv )
+{
+	if (!hasCmd( "-triquad", argc, argv )) return -1; // not applicable
+
+	if( argc != 5 )
+	{
+		outCmdErr();
+		return 1; // error
+	}
+
+	std::string prcfile( argv[2] );
+	std::string pdffile( argv[3] );
+	std::string jsfile( argv[4] ); 
+
+	createPrcTriQuad( prcfile );
+	createPdf( pdffile.c_str(), prcfile.c_str(), jsfile.c_str() );
+	return 0; // success
+}
+
+void createPrcTriQuad( const std::string &prcfile )
+{
+	oPRCFile file(prcfile.c_str());
+	PRCoptions grpopt;
+	grpopt.no_break = true;
+	grpopt.do_break = false;
+	grpopt.tess = true;
+	grpopt.closed = true;
+
+	double t[4][4];
+
+	
+	t[0][0]=1; t[0][1]=0; t[0][2]=0; t[0][3]=0;
+	t[1][0]=0; t[1][1]=1; t[1][2]=0; t[1][3]=0;
+	t[2][0]=0; t[2][1]=0; t[2][2]=1; t[2][3]=-1;
+	t[3][0]=0; t[3][1]=0; t[3][2]=0; t[3][3]=1;
+
+	file.begingroup("tri_2quad",&grpopt, (const double *)t);
+
+	PRCmaterial materialWhite(
+		RGBAColour(0.0,0.18,0.0),
+		RGBAColour(1.0,1.0,1.0),
+		RGBAColour(0.0,0.32,0.0),
+		RGBAColour(0.0,0.072,0.0),
+		1.0,0.1);
+	
+	PRCmaterial materialGreen(
+		RGBAColour(0.0,0.18,0.0),
+		RGBAColour(0.0,0.878431,0.0),
+		RGBAColour(0.0,0.32,0.0),
+		RGBAColour(0.0,0.072,0.0),
+		1.0,0.1);
+
+	PRCmaterial materialRed(
+		RGBAColour(0.18, 0.,0.0),
+		RGBAColour(1.0,0.0,0.0),
+		RGBAColour(0.32,0.,0.0),
+		RGBAColour(0.072,0.0,0.0),
+		1.0,0.1);
+
+	// lets add the material the tess and then use the mesh
+	const uint32_t mat_index_white = file.addMaterial( materialWhite );
+	const uint32_t mat_index_green = file.addMaterial( materialGreen );
+	const uint32_t mat_index_red = file.addMaterial( materialRed );
+
+
+
+	// create a tri strip
+	PRC3DTess *tess = new PRC3DTess();
+
+
+	// add verts
+	const size_t nP = 11;
+	double P[nP][3] = {{0,0,-2},{1,0,-2},{1,0,-1},{0,0,-1},{0,0,0},{1,0,0},{1,0,1},{0,0,1},{-1,0,-1},{-.5,0,-1},{-.5,0,0}};
+	for( int v=0; v<nP; v++ )
+	{
+		for(int i=0; i<3; i++ )
+		{
+			tess->coordinates.push_back( P[v][i] );
+		}
+	}
+
+	// add normals
+	const size_t nN = 11;
+	double N[nN][3] = {{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0}};
+	for( int v=0; v<nN; v++ )
+	{
+		for(int i=0; i<3; i++ )
+		{
+			tess->normal_coordinate.push_back( P[v][i] );
+		}
+	}
+
+	int triCount = 1;
+
+	// for strip
+	// add our normal index, then texture, then vert.. no texture coords here though
+	for( int i=8; i<11; i++)
+	{
+		tess->triangulated_index.push_back( 3*i ); // normal index
+		tess->triangulated_index.push_back( 3*i ); // vert index
+	}
+
+	bool hasTexCoords = false;
+	PRCTessFace *tessFace = new PRCTessFace();
+	tessFace->number_of_texture_coordinate_indexes = hasTexCoords ? 1 : 0;
+	tessFace->used_entities_flag = hasTexCoords ? PRC_FACETESSDATA_TriangleTextured : PRC_FACETESSDATA_Triangle;
+
+	//tessFace->sizes_triangulated.push_back( triCount );
+	tessFace->sizes_triangulated.push_back( 1 );
+	tessFace->start_triangulated = 0;
+	//tessFace->line_attributes.push_back(mat_index_green);
+	tess->addTessFace( tessFace );
+
+	// create a quads
+	
+	int i = 0;
+	tess->triangulated_index.push_back( 3*i ); // normal index
+	tess->triangulated_index.push_back( 3*i ); // vert index
+
+	i=1;
+	tess->triangulated_index.push_back( 3*i ); // normal index
+	tess->triangulated_index.push_back( 3*i ); // vert index
+
+	i=2;
+	tess->triangulated_index.push_back( 3*i ); // normal index
+	tess->triangulated_index.push_back( 3*i ); // vert index
+
+	i = 0;
+	tess->triangulated_index.push_back( 3*i ); // normal index
+	tess->triangulated_index.push_back( 3*i ); // vert index
+
+	i = 2;
+	tess->triangulated_index.push_back( 3*i ); // normal index
+	tess->triangulated_index.push_back( 3*i ); // vert index
+
+	i = 3;
+	tess->triangulated_index.push_back( 3*i ); // normal index
+	tess->triangulated_index.push_back( 3*i ); // vert index
+	
+
+	tessFace = new PRCTessFace();
+	tessFace->number_of_texture_coordinate_indexes = hasTexCoords ? 1 : 0;
+	tessFace->used_entities_flag = hasTexCoords ? PRC_FACETESSDATA_TriangleTextured : PRC_FACETESSDATA_Triangle;
+	tessFace->sizes_triangulated.push_back( 2 );
+	tessFace->start_triangulated = 6;
 	tessFace->line_attributes.push_back(mat_index_red);
 	tess->addTessFace( tessFace );
 
