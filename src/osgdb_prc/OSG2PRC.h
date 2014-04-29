@@ -51,11 +51,9 @@ protected:
     void processTransformNode( const std::string& name, const osg::Matrix& matrix );
 	void finishNode();
 
-    static void processDrawArrays( const osg::DrawArrays* da, PRC3DTess *tess, uint32_t &curTriCount );
-    static void processDrawArrayLengths( const osg::DrawArrayLengths* dal );
-    static void processDrawElements( const osg::DrawElementsUInt* deui );
-    static osg::DrawElementsUInt* convertDrawElements( const osg::DrawElementsUByte* deub );
-    static osg::DrawElementsUInt* convertDrawElements( const osg::DrawElementsUShort* deus );
+    static void processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, uint32_t& curTriCount );
+    static void processDrawArrayLengths( const osg::DrawArrayLengths* dal, PRC3DTess* tess, uint32_t& curTriCount );
+    static void processDrawElements( const osg::DrawElements* de, PRC3DTess* tess, uint32_t& curTriCount );
 
     typedef std::map< const osg::Material*, uint32_t > MaterialStyleMap;
     MaterialStyleMap _styles;
