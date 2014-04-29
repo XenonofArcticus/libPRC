@@ -11,15 +11,22 @@ void outCmdErr();
 int runBasic( int argc, char** argv );
 int runAQuad( int argc, char** argv );
 int runQuad( int argc, char** argv );
+int runTriStrip( int argc, char** argv );
+int runTriStripMulti( int argc, char** argv );
 
 void createPdf( const std::string &pdffile, const std::string &prcfile, const std::string &jsfile );
 
 void createPrcAQuad( const std::string &prcfile );
 void createPrcQuad( const std::string &prcfile );
+void createPrcTriStrip( const std::string &prcfile );
+void createPrcTriStripMulti( const std::string &prcfile );
 void createPrcTest( const std::string &prcfile );
+
 
 // "D:\d\testdata\teapot.prc" "D:\d\testdata\teapot.pdf" "D:\skewmatrix\projects\libPRC\src\tools\prctopdf\s2plot-prc.js"
 // -quad "D:\d\testdata\quad.prc" "D:\d\testdata\quad.pdf" "D:\skewmatrix\projects\libPRC\src\tools\prctopdf\s2plot-prc.js"
+// -tristrip "D:\d\testdata\tristrip.prc" "D:\d\testdata\tristrip.pdf" "D:\skewmatrix\projects\libPRC\src\tools\prctopdf\s2plot-prc.js"
+// -tristripm "D:\d\testdata\tristripm.prc" "D:\d\testdata\tristripm.pdf" "D:\skewmatrix\projects\libPRC\src\tools\prctopdf\s2plot-prc.js"
 
 int main( int argc, char** argv )
 {
@@ -29,6 +36,12 @@ int main( int argc, char** argv )
 	if (ret >= 0) return( ret );
 
 	ret = runQuad( argc, argv );
+	if (ret >= 0) return( ret );
+
+	ret = runTriStrip( argc, argv );
+	if (ret >= 0) return( ret );
+
+	ret = runTriStripMulti( argc, argv );
 	if (ret >= 0) return( ret );
 
 	ret = runBasic( argc, argv );
@@ -386,45 +399,218 @@ void createPrcQuad( const std::string &prcfile )
 	*/
 }
 
-void createCubePrc(const std::string &prcfile)
+int runTriStrip( int argc, char** argv )
+{
+	if (!hasCmd( "-tristrip", argc, argv )) return -1; // not applicable
+
+	if( argc != 5 )
+	{
+		outCmdErr();
+		return 1; // error
+	}
+
+	std::string prcfile( argv[2] );
+	std::string pdffile( argv[3] );
+	std::string jsfile( argv[4] ); 
+
+	createPrcTriStrip( prcfile );
+	createPdf( pdffile.c_str(), prcfile.c_str(), jsfile.c_str() );
+	return 0; // success
+}
+
+void createPrcTriStrip( const std::string &prcfile )
 {
 	oPRCFile file(prcfile.c_str());
-
-	PRCmaterial material;
-	material.diffuse.R = 1.0;
-	material.diffuse.G = 1.0;
-	material.diffuse.B = 1.0;
-	material.diffuse.A = 1;;
-	material.specular.R = 1;
-	material.specular.G = 1;
-	material.specular.B = 1;
-	material.specular.A = 1;
-	material.emissive.R = 1;
-	material.emissive.G = 1;
-	material.emissive.B = 1;
-	material.emissive.A = 1;
-	material.ambient.R  = 1;
-	material.ambient.G  = 1;
-	material.ambient.B  = 1;
-	material.ambient.A  = 1;
-	material.alpha      = 1;
-	material.shininess  = 0.1;
-
-	uint32_t idxmat = file.addMaterial(material);
-
 	PRCoptions grpopt;
 	grpopt.no_break = true;
 	grpopt.do_break = false;
 	grpopt.tess = true;
 	grpopt.closed = true;
 
-	file.begingroup("cube", &grpopt);
+	double t[4][4];
+
+	// create a tri strip
+	PRC3DTess *tess = new PRC3DTess();
 
 
+	// add verts
+	const size_t nP = 10;
+	double P[nP][3] = {{0,0,-2},{1,0,-2},{0,0,-1},{1,0,-1},{0,0,0},{1,0,0},{0,0,1},{1,0,1},{0,0,2},{1,0,2}};
+	for( int v=0; v<nP; v++ )
+	{
+		for(int i=0; i<3; i++ )
+		{
+			tess->coordinates.push_back( P[v][i] );
+		}
+	}
+
+	// add normals
+	const size_t nN = 10;
+	double N[nN][3] = {{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0}};
+	for( int v=0; v<nN; v++ )
+	{
+		for(int i=0; i<3; i++ )
+		{
+			tess->normal_coordinate.push_back( P[v][i] );
+		}
+	}
+
+	// add indexes for our tristrip
+	int triCount = nP - 2;
+
+	// for strip
+	// add our normal index, then texture, then vert.. no texture coords here though
+	for( int i=0; i<nP; i++)
+	{
+		tess->triangulated_index.push_back( 3*i ); // normal index
+		tess->triangulated_index.push_back( 3*i ); // vert index
+	}
+
+	bool hasTexCoords = false;
+	PRCTessFace *tessFace = new PRCTessFace();
+	tessFace->number_of_texture_coordinate_indexes = hasTexCoords ? 1 : 0;
+	tessFace->used_entities_flag = hasTexCoords ? PRC_FACETESSDATA_TriangleStripeTextured : PRC_FACETESSDATA_TriangleStripe;
+
+	//tessFace->sizes_triangulated.push_back( triCount );
+	tessFace->sizes_triangulated.push_back( 1 );
+	tessFace->sizes_triangulated.push_back( 10 );
+	tessFace->start_triangulated = 0;
+	tess->addTessFace( tessFace );
+
+	t[0][0]=1; t[0][1]=0; t[0][2]=0; t[0][3]=0;
+	t[1][0]=0; t[1][1]=1; t[1][2]=0; t[1][3]=0;
+	t[2][0]=0; t[2][1]=0; t[2][2]=1; t[2][3]=-1;
+	t[3][0]=0; t[3][1]=0; t[3][2]=0; t[3][3]=1;
+
+	file.begingroup("triangle_strip",&grpopt, (const double *)t);
+
+	PRCmaterial materialGreen(
+		RGBAColour(0.0,0.18,0.0),
+		RGBAColour(0.0,0.878431,0.0),
+		RGBAColour(0.0,0.32,0.0),
+		RGBAColour(0.0,0.072,0.0),
+		1.0,0.1);
+
+	// lets add the material the tess and then use the mesh
+	const uint32_t mat_index = file.addMaterial( materialGreen );
+	const uint32_t tess_index = file.add3DTess( tess );
+	file.useMesh( tess_index, mat_index );
 
 	file.endgroup();
-	file.finish();
 
+	file.finish();
+}
+
+int runTriStripMulti( int argc, char** argv )
+{
+	if (!hasCmd( "-tristripm", argc, argv )) return -1; // not applicable
+
+	if( argc != 5 )
+	{
+		outCmdErr();
+		return 1; // error
+	}
+
+	std::string prcfile( argv[2] );
+	std::string pdffile( argv[3] );
+	std::string jsfile( argv[4] ); 
+
+	createPrcTriStripMulti( prcfile );
+	createPdf( pdffile.c_str(), prcfile.c_str(), jsfile.c_str() );
+	return 0; // success
+}
+
+void createPrcTriStripMulti( const std::string &prcfile )
+{
+	oPRCFile file(prcfile.c_str());
+	PRCoptions grpopt;
+	grpopt.no_break = true;
+	grpopt.do_break = false;
+	grpopt.tess = true;
+	grpopt.closed = true;
+
+	double t[4][4];
+
+	// create a tri strip
+	PRC3DTess *tess = new PRC3DTess();
+
+
+	// add verts
+	const size_t nP = 10;
+	double P[nP][3] = {{0,0,-2},{1,0,-2},{0,0,-1},{1,0,-1},{0,0,0},{1,0,0},{0,0,1},{1,0,1},{0,0,2},{1,0,2}};
+	for( int v=0; v<nP; v++ )
+	{
+		for(int i=0; i<3; i++ )
+		{
+			tess->coordinates.push_back( P[v][i] );
+		}
+	}
+
+	// add normals
+	const size_t nN = 10;
+	double N[nN][3] = {{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0},{0,-1,0}};
+	for( int v=0; v<nN; v++ )
+	{
+		for(int i=0; i<3; i++ )
+		{
+			tess->normal_coordinate.push_back( P[v][i] );
+		}
+	}
+
+	// add indexes for our tristrip
+	int triCount = nP - 2;
+
+	// for strip
+	// add our normal index, then texture, then vert.. no texture coords here though
+	for( int i=0; i<nP; i++)
+	{
+		tess->triangulated_index.push_back( 3*i ); // normal index
+		tess->triangulated_index.push_back( 3*i ); // vert index
+	}
+
+	bool hasTexCoords = false;
+	PRCTessFace *tessFace = new PRCTessFace();
+	tessFace->number_of_texture_coordinate_indexes = hasTexCoords ? 1 : 0;
+	tessFace->used_entities_flag = hasTexCoords ? PRC_FACETESSDATA_TriangleStripeTextured : PRC_FACETESSDATA_TriangleStripe;
+
+	//tessFace->sizes_triangulated.push_back( triCount );
+	tessFace->sizes_triangulated.push_back( 1 );
+	tessFace->sizes_triangulated.push_back( 4 );
+	tessFace->start_triangulated = 0;
+	tess->addTessFace( tessFace );
+
+	tessFace = new PRCTessFace();
+	tessFace->number_of_texture_coordinate_indexes = hasTexCoords ? 1 : 0;
+	tessFace->used_entities_flag = hasTexCoords ? PRC_FACETESSDATA_TriangleStripeTextured : PRC_FACETESSDATA_TriangleStripe;
+
+	//tessFace->sizes_triangulated.push_back( triCount );
+	tessFace->sizes_triangulated.push_back( 1 );
+	tessFace->sizes_triangulated.push_back( 6 );
+	tessFace->start_triangulated = 4;
+	tess->addTessFace( tessFace );
+
+	t[0][0]=1; t[0][1]=0; t[0][2]=0; t[0][3]=0;
+	t[1][0]=0; t[1][1]=1; t[1][2]=0; t[1][3]=0;
+	t[2][0]=0; t[2][1]=0; t[2][2]=1; t[2][3]=-1;
+	t[3][0]=0; t[3][1]=0; t[3][2]=0; t[3][3]=1;
+
+	file.begingroup("triangle_strip",&grpopt, (const double *)t);
+
+	PRCmaterial materialGreen(
+		RGBAColour(0.0,0.18,0.0),
+		RGBAColour(0.0,0.878431,0.0),
+		RGBAColour(0.0,0.32,0.0),
+		RGBAColour(0.0,0.072,0.0),
+		1.0,0.1);
+
+	// lets add the material the tess and then use the mesh
+	const uint32_t mat_index = file.addMaterial( materialGreen );
+	const uint32_t tess_index = file.add3DTess( tess );
+	file.useMesh( tess_index, mat_index );
+
+	file.endgroup();
+
+	file.finish();
 }
 
 void createPrcTest(const std::string &prcfile)

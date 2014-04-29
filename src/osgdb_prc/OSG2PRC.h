@@ -80,6 +80,7 @@ protected:
 	oPRCFile* _prcFile;
 
 #endif
+
 };
 
 
