@@ -332,48 +332,52 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, uin
     }
     case GL_QUADS:
     {
-        for( unsigned int idx = first; idx+3 < lastPlusOne; )
+        for( unsigned int idx = first; idx+3 < lastPlusOne; idx += 4 )
         {
+            const unsigned int curIdx0( idx );
+            const unsigned int curIdx1( idx+1 );
+            const unsigned int curIdx2( idx+2 );
+            const unsigned int curIdx3( idx+3 );
+
             // Two triangles, A and B
-            //   Triangle A, verts 0, 1, 3
+            //   Triangle A, verts 0, 1, 2
 			if( hasnormals )
-				tess->triangulated_index.push_back( 3*idx );
+				tess->triangulated_index.push_back( curIdx0 * 3 );
 			if( hasTexCoords )
-				tess->triangulated_index.push_back( 2*idx );
-			tess->triangulated_index.push_back( 3*idx );
+				tess->triangulated_index.push_back( curIdx0 * 2 );
+			tess->triangulated_index.push_back( curIdx0 * 3 );
 
 			if( hasnormals )
-				tess->triangulated_index.push_back( 3*(idx+1) );
+				tess->triangulated_index.push_back( curIdx1 * 3 );
 			if( hasTexCoords )
-				tess->triangulated_index.push_back( 2*(idx+1) );
-			tess->triangulated_index.push_back( 3*(idx+1) );
+				tess->triangulated_index.push_back( curIdx1 * 2 );
+			tess->triangulated_index.push_back( curIdx1 * 3 );
 
 			if( hasnormals )
-				tess->triangulated_index.push_back( 3*(idx+3) );
+				tess->triangulated_index.push_back( curIdx2 * 3 );
 			if( hasTexCoords )
-				tess->triangulated_index.push_back( 2*(idx+3) );
-			tess->triangulated_index.push_back( 3*(idx+3) );
+				tess->triangulated_index.push_back( curIdx2 * 2 );
+			tess->triangulated_index.push_back( curIdx2 * 3 );
 
-            //   Triangle B, verts 3, 1, 2
+            //   Triangle B, verts 0, 2, 3
 			if( hasnormals )
-				tess->triangulated_index.push_back( 3*(idx+3) );
+				tess->triangulated_index.push_back( curIdx0 * 3 );
 			if( hasTexCoords )
-				tess->triangulated_index.push_back( 2*(idx+3) );
-			tess->triangulated_index.push_back( 3*(idx+3) );
-
-			if( hasnormals )
-				tess->triangulated_index.push_back( 3*(idx+1) );
-			if( hasTexCoords )
-				tess->triangulated_index.push_back( 2*(idx+1) );
-			tess->triangulated_index.push_back( 3*(idx+1) );
+				tess->triangulated_index.push_back( curIdx0 * 2 );
+			tess->triangulated_index.push_back( curIdx0 * 3 );
 
 			if( hasnormals )
-				tess->triangulated_index.push_back( 3*(idx+2) );
+				tess->triangulated_index.push_back( curIdx2 * 3 );
 			if( hasTexCoords )
-				tess->triangulated_index.push_back( 2*(idx+2) );
-			tess->triangulated_index.push_back( 3*(idx+2) );
+				tess->triangulated_index.push_back( curIdx2 * 2 );
+			tess->triangulated_index.push_back( curIdx2 * 3 );
 
-            idx += 4;
+			if( hasnormals )
+				tess->triangulated_index.push_back( curIdx3 * 3 );
+			if( hasTexCoords )
+				tess->triangulated_index.push_back( curIdx3 * 2 );
+			tess->triangulated_index.push_back( curIdx3 * 3 );
+
 			triCount += 2;
         }
         break;
@@ -460,12 +464,12 @@ void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess,
     }
     case GL_QUADS:
     {
-        for( unsigned int idx = 0; idx+3 < de->getNumIndices(); )
+        for( unsigned int idx = 0; idx+3 < de->getNumIndices(); idx += 4 )
         {
             const unsigned int curIdx0( de->index( idx ) );
             const unsigned int curIdx1( de->index( idx+1 ) );
             const unsigned int curIdx2( de->index( idx+2 ) );
-            const unsigned int curIdx3( de->index( idx=3 ) );
+            const unsigned int curIdx3( de->index( idx+3 ) );
 
             // Two triangles, A and B
             //   Triangle A, verts 0, 1, 3
@@ -506,7 +510,6 @@ void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess,
 				tess->triangulated_index.push_back( curIdx2 * 2 );
 			tess->triangulated_index.push_back( curIdx2 * 3 );
 
-            idx += 4;
 			triCount += 2;
         }
         break;
