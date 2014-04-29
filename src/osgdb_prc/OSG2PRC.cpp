@@ -413,18 +413,18 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, uin
     }
 
 	// update our face object
-	switch( da->getMode() )
-    {
-    case GL_TRIANGLES:
-	case GL_QUADS:
-		tessFace->sizes_triangulated.push_back( triCount );
-		break;
-    case GL_TRIANGLE_FAN:
-    case GL_TRIANGLE_STRIP:
-		tessFace->sizes_triangulated.push_back( 1 );
-		tessFace->sizes_triangulated.push_back( idxCount );
-		break;
-	}
+	    switch( da->getMode() )
+        {
+        case GL_TRIANGLES:
+	    case GL_QUADS:
+		    tessFace->sizes_triangulated.push_back( triCount );
+		    break;
+        case GL_TRIANGLE_FAN:
+        case GL_TRIANGLE_STRIP:
+		    tessFace->sizes_triangulated.push_back( 1 );
+		    tessFace->sizes_triangulated.push_back( idxCount );
+		    break;
+	    }
 	
 	
 	tessFace->start_triangulated = curIdxCount;
@@ -599,7 +599,14 @@ void OSG2PRC::processTransformNode( const std::string& name, const osg::Matrix& 
 {
     std::cout << "TBD: Add matrix to PRC" << std::endl;
 
-	_prcFile->begingroup( name.c_str(), NULL, matrix.ptr());
+    const double* d( matrix.ptr() );
+    const osg::Matrix transpose(
+        d[0], d[4], d[8], d[12],
+        d[1], d[5], d[9], d[13],
+        d[2], d[6], d[10], d[14],
+        d[3], d[7], d[11], d[15] );
+
+	_prcFile->begingroup( name.c_str(), NULL, transpose.ptr());
 }
 void OSG2PRC::finishNode()
 {
