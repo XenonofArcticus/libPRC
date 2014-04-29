@@ -181,26 +181,26 @@ void OSG2PRC::apply( const osg::Geometry* geom )
 
 	// NOTE: this is used on the face object for starting triangle index
 	//		 int works in triangles which each actually have 3 indexs for each vert, but we only worry about triangle count
-	uint32_t curTriCount = 0; 
+	uint32_t curIdxCount = 0; 
 	for( unsigned int idx=0; idx < geom->getNumPrimitiveSets(); ++idx )
     {
         const osg::PrimitiveSet* ps( geom->getPrimitiveSet( idx ) );
         switch( ps->getType() ) {
         case osg::PrimitiveSet::DrawArraysPrimitiveType:
         {
-            processDrawArrays( static_cast< const osg::DrawArrays* >( ps ), tess, curTriCount );
+            processDrawArrays( static_cast< const osg::DrawArrays* >( ps ), tess, curIdxCount );
             break;
         }
         case osg::PrimitiveSet::DrawArrayLengthsPrimitiveType:
         {
-            processDrawArrayLengths( static_cast< const osg::DrawArrayLengths* >( ps ), tess, curTriCount );
+            processDrawArrayLengths( static_cast< const osg::DrawArrayLengths* >( ps ), tess, curIdxCount );
             break;
         }
         case osg::PrimitiveSet::DrawElementsUBytePrimitiveType:
         case osg::PrimitiveSet::DrawElementsUShortPrimitiveType:
         case osg::PrimitiveSet::DrawElementsUIntPrimitiveType:
         {
-            processDrawElements( static_cast< const osg::DrawElements* >( ps ), tess, curTriCount );
+            processDrawElements( static_cast< const osg::DrawElements* >( ps ), tess, curIdxCount );
             break;
         }
         }
@@ -292,7 +292,7 @@ PRC3DTess* OSG2PRC::createTess( const osg::Geometry* geom )
 	return tess;
 }
 
-void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, uint32_t& curTriCount )
+void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, uint32_t& curIdxCount )
 {
 	const bool hasnormals( tess->normal_coordinate.size() > 0 );
     const bool hasTexCoords( tess->texture_coordinate.size() > 0 );
@@ -323,6 +323,7 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, uin
 
     // Add indices to the tess.
 	uint32_t triCount = 0;
+	uint32_t idxCount = 0;
     const unsigned int first( da->getFirst() );
     const unsigned int lastPlusOne( da->getFirst() + da->getCount() );
     switch( da->getMode() )
@@ -338,11 +339,15 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, uin
 			if( hasTexCoords )
 				tess->triangulated_index.push_back( 2*idx );
 			tess->triangulated_index.push_back( 3*idx );
+
+			idxCount++;
         }
+
         if( da->getMode() == GL_TRIANGLES )
 			triCount = da->getCount() / 3;
         else // strip or fan
 			triCount = ( da->getCount() >= 3 ) ? ( da->getCount() - 2 ) : 0;
+		
         break;
     }
     case GL_QUADS:
@@ -361,18 +366,21 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, uin
 			if( hasTexCoords )
 				tess->triangulated_index.push_back( curIdx0 * 2 );
 			tess->triangulated_index.push_back( curIdx0 * 3 );
+			idxCount++;
 
 			if( hasnormals )
 				tess->triangulated_index.push_back( curIdx1 * 3 );
 			if( hasTexCoords )
 				tess->triangulated_index.push_back( curIdx1 * 2 );
 			tess->triangulated_index.push_back( curIdx1 * 3 );
+			idxCount++;
 
 			if( hasnormals )
 				tess->triangulated_index.push_back( curIdx2 * 3 );
 			if( hasTexCoords )
 				tess->triangulated_index.push_back( curIdx2 * 2 );
 			tess->triangulated_index.push_back( curIdx2 * 3 );
+			idxCount++;
 
             //   Triangle B, verts 0, 2, 3
 			if( hasnormals )
@@ -380,18 +388,21 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, uin
 			if( hasTexCoords )
 				tess->triangulated_index.push_back( curIdx0 * 2 );
 			tess->triangulated_index.push_back( curIdx0 * 3 );
+			idxCount++;
 
 			if( hasnormals )
 				tess->triangulated_index.push_back( curIdx2 * 3 );
 			if( hasTexCoords )
 				tess->triangulated_index.push_back( curIdx2 * 2 );
 			tess->triangulated_index.push_back( curIdx2 * 3 );
+			idxCount++;
 
 			if( hasnormals )
 				tess->triangulated_index.push_back( curIdx3 * 3 );
 			if( hasTexCoords )
 				tess->triangulated_index.push_back( curIdx3 * 2 );
 			tess->triangulated_index.push_back( curIdx3 * 3 );
+			idxCount++;
 
 			triCount += 2;
         }
@@ -402,14 +413,28 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, uin
     }
 
 	// update our face object
-	tessFace->sizes_triangulated.push_back( triCount );
-	tessFace->start_triangulated = curTriCount;
+	
+	switch( da->getMode() )
+    {
+    case GL_TRIANGLES:
+	case GL_QUADS:
+		tessFace->sizes_triangulated.push_back( triCount );
+		break;
+    case GL_TRIANGLE_FAN:
+    case GL_TRIANGLE_STRIP:
+		tessFace->sizes_triangulated.push_back( 1 );
+		tessFace->sizes_triangulated.push_back( idxCount );
+		break;
+	}
+	
+	
+	tessFace->start_triangulated = curIdxCount;
 	tess->addTessFace( tessFace );
     tess->has_faces = true;
 
-	curTriCount += triCount; // update the triangle count
+	curIdxCount += idxCount; // update the triangle count
 }
-void OSG2PRC::processDrawArrayLengths( const osg::DrawArrayLengths* dal, PRC3DTess* tess, uint32_t& curTriCount )
+void OSG2PRC::processDrawArrayLengths( const osg::DrawArrayLengths* dal, PRC3DTess* tess, uint32_t& curIdxCount )
 {
     //std::cout << "Processing DrawArrayLengths." << std::endl;
 
@@ -419,11 +444,11 @@ void OSG2PRC::processDrawArrayLengths( const osg::DrawArrayLengths* dal, PRC3DTe
     for( unsigned int idx=0; idx < dal->size(); ++idx )
     {
         da->setCount( (*dal)[ idx ] );
-        processDrawArrays( da.get(), tess, curTriCount );
+        processDrawArrays( da.get(), tess, curIdxCount );
         da->setFirst( da->getFirst() + (*dal)[ idx ] );
     }
 }
-void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess, uint32_t& curTriCount )
+void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess, uint32_t& curIdxCount )
 {
     //std::cout << "Processing DrawElements." << std::endl;
 
@@ -456,6 +481,7 @@ void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess,
 
     // Add indices to the tess.
 	uint32_t triCount = 0;
+	uint32_t idxCount = 0; // TODO:
     switch( de->getMode() )
     {
     case GL_TRIANGLES:
@@ -470,6 +496,7 @@ void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess,
 			if( hasTexCoords )
 				tess->triangulated_index.push_back( curIdx * 2 );
 			tess->triangulated_index.push_back( curIdx * 3 );
+
         }
         if( de->getMode() == GL_TRIANGLES )
             triCount = de->getNumIndices() / 3;
@@ -533,6 +560,8 @@ void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess,
         break;
     }
 
+	// TODO:
+	/*
 	// update our face object
 	tessFace->sizes_triangulated.push_back( triCount );
 	tessFace->start_triangulated = curTriCount;
@@ -540,6 +569,7 @@ void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess,
     tess->has_faces = true;
 
 	curTriCount += triCount; // update the triangle count
+	*/
 }
 
 

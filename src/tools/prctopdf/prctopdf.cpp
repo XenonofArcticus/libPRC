@@ -531,6 +531,35 @@ void createPrcTriStripMulti( const std::string &prcfile )
 
 	double t[4][4];
 
+	
+	t[0][0]=1; t[0][1]=0; t[0][2]=0; t[0][3]=0;
+	t[1][0]=0; t[1][1]=1; t[1][2]=0; t[1][3]=0;
+	t[2][0]=0; t[2][1]=0; t[2][2]=1; t[2][3]=-1;
+	t[3][0]=0; t[3][1]=0; t[3][2]=0; t[3][3]=1;
+
+	file.begingroup("2_triangle_strip",&grpopt, (const double *)t);
+
+	
+	PRCmaterial materialGreen(
+		RGBAColour(0.0,0.18,0.0),
+		RGBAColour(0.0,0.878431,0.0),
+		RGBAColour(0.0,0.32,0.0),
+		RGBAColour(0.0,0.072,0.0),
+		1.0,0.1);
+
+	PRCmaterial materialRed(
+		RGBAColour(0.0, 0.18,0.0),
+		RGBAColour(0.878431,0.0,0.0),
+		RGBAColour(0.0,0.32,0.0),
+		RGBAColour(0.0,0.072,0.0),
+		1.0,0.1);
+
+	// lets add the material the tess and then use the mesh
+	const uint32_t mat_index_green = file.addMaterial( materialGreen );
+	const uint32_t mat_index_red = file.addMaterial( materialRed );
+
+
+
 	// create a tri strip
 	PRC3DTess *tess = new PRC3DTess();
 
@@ -587,26 +616,11 @@ void createPrcTriStripMulti( const std::string &prcfile )
 	tessFace->sizes_triangulated.push_back( 1 );
 	tessFace->sizes_triangulated.push_back( 6 );
 	tessFace->start_triangulated = 4;
+	tessFace->line_attributes.push_back(mat_index_red);
 	tess->addTessFace( tessFace );
 
-	t[0][0]=1; t[0][1]=0; t[0][2]=0; t[0][3]=0;
-	t[1][0]=0; t[1][1]=1; t[1][2]=0; t[1][3]=0;
-	t[2][0]=0; t[2][1]=0; t[2][2]=1; t[2][3]=-1;
-	t[3][0]=0; t[3][1]=0; t[3][2]=0; t[3][3]=1;
-
-	file.begingroup("triangle_strip",&grpopt, (const double *)t);
-
-	PRCmaterial materialGreen(
-		RGBAColour(0.0,0.18,0.0),
-		RGBAColour(0.0,0.878431,0.0),
-		RGBAColour(0.0,0.32,0.0),
-		RGBAColour(0.0,0.072,0.0),
-		1.0,0.1);
-
-	// lets add the material the tess and then use the mesh
-	const uint32_t mat_index = file.addMaterial( materialGreen );
 	const uint32_t tess_index = file.add3DTess( tess );
-	file.useMesh( tess_index, mat_index );
+	file.useMesh( tess_index, mat_index_green );
 
 	file.endgroup();
 
