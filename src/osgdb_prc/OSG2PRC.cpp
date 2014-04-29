@@ -32,7 +32,7 @@ OSG2PRC::~OSG2PRC()
 
 void OSG2PRC::apply( osg::Node& node )
 {
-    std::cout << "Found osg::Node" << std::endl;
+    //std::cout << "Found osg::Node" << std::endl;
 
     processNewNode( node.getName() );
 
@@ -45,7 +45,7 @@ void OSG2PRC::apply( osg::Node& node )
 }
 void OSG2PRC::apply( osg::Transform& trans )
 {
-    std::cout << "Found osg::Transform" << std::endl;
+    //std::cout << "Found osg::Transform" << std::endl;
 
     osg::Matrix m;
     trans.computeLocalToWorldMatrix( m, NULL );
@@ -60,7 +60,7 @@ void OSG2PRC::apply( osg::Transform& trans )
 }
 void OSG2PRC::apply( osg::Geode& geode )
 {
-    std::cout << "Found osg::Geode" << std::endl;
+    //std::cout << "Found osg::Geode" << std::endl;
 
     processNewNode( geode.getName() );
 
@@ -133,7 +133,7 @@ void OSG2PRC::addDefaultMaterial()
 
 void OSG2PRC::apply( const osg::StateSet* stateSet )
 {
-    std::cout << "Found osg::StateSet" << std::endl;
+    //std::cout << "Found osg::StateSet" << std::endl;
 
     const osg::StateAttribute* sa( stateSet->getAttribute( osg::StateAttribute::MATERIAL ) );
     if( sa != NULL )
@@ -164,12 +164,12 @@ void OSG2PRC::apply( const osg::StateSet* stateSet )
 }
 void OSG2PRC::apply( const osg::Geometry* geom )
 {
-    std::cout << "Found osg::Geometry" << std::endl;
+    //std::cout << "Found osg::Geometry" << std::endl;
 
     if( geom->getStateSet() != NULL )
         apply( geom->getStateSet() );
 
-    std::cout << "Current style: " << getStyle() << std::endl;
+    //std::cout << "Current style: " << getStyle() << std::endl;
 
 
 	PRC3DTess *tess = createTess( geom );
@@ -247,14 +247,29 @@ PRC3DTess* OSG2PRC::createTess( const osg::Geometry* geom )
         const osg::Vec3Array* normals( static_cast< const osg::Vec3Array* >( array ) );
         std::cout << "Adding normals array to PRC, size " << array->getNumElements() << std::endl;
 
-		tess->normal_coordinate.reserve( normals->size()*3 );
-		for( uint32_t i=0; i<normals->size(); i++ )
-		{
-			const osg::Vec3& v( normals->at( i ) );
-			tess->normal_coordinate.push_back(v.x());
-			tess->normal_coordinate.push_back(v.y());
-			tess->normal_coordinate.push_back(v.z());
-		}
+        tess->normal_coordinate.reserve( vertices->size()*3 );
+        if( normals->size() == vertices->size() )
+        {
+		    for( uint32_t i=0; i<normals->size(); i++ )
+		    {
+			    const osg::Vec3& v( normals->at( i ) );
+			    tess->normal_coordinate.push_back(v.x());
+			    tess->normal_coordinate.push_back(v.y());
+			    tess->normal_coordinate.push_back(v.z());
+		    }
+        }
+        else
+        {
+            // Normals array is a different size, BIND_OVERALL is likely cause.
+            // Let's just fake it by repeating the first normal.
+            const osg::Vec3& v( normals->at( 0 ) );
+		    for( uint32_t i=0; i<vertices->size(); i++ )
+		    {
+			    tess->normal_coordinate.push_back(v.x());
+			    tess->normal_coordinate.push_back(v.y());
+			    tess->normal_coordinate.push_back(v.z());
+		    }
+        }
     }
 	else
 	{
@@ -396,7 +411,7 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, uin
 }
 void OSG2PRC::processDrawArrayLengths( const osg::DrawArrayLengths* dal, PRC3DTess* tess, uint32_t& curTriCount )
 {
-    std::cout << "Processing DrawArrayLengths." << std::endl;
+    //std::cout << "Processing DrawArrayLengths." << std::endl;
 
     osg::ref_ptr< osg::DrawArrays > da( new osg::DrawArrays( dal->getMode() ) );
     da->setFirst( dal->getFirst() );
@@ -410,7 +425,7 @@ void OSG2PRC::processDrawArrayLengths( const osg::DrawArrayLengths* dal, PRC3DTe
 }
 void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess, uint32_t& curTriCount )
 {
-    std::cout << "Processing DrawElements." << std::endl;
+    //std::cout << "Processing DrawElements." << std::endl;
 
 	const bool hasnormals( tess->normal_coordinate.size() > 0 );
     const bool hasTexCoords( tess->texture_coordinate.size() > 0 );
@@ -530,7 +545,7 @@ void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess,
 
 void OSG2PRC::processNewNode( const std::string& name )
 {
-	std::cout << "Adding new node (with name " << name << ") to PRC" << std::endl;
+	//std::cout << "Adding new node (with name " << name << ") to PRC" << std::endl;
 
 	_prcFile->begingroup( name.c_str() );
 
