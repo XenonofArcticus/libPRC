@@ -316,12 +316,12 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, uin
             if( hasnormals )
             {
                 tess->triangulated_index.push_back( 3*idx );
-                idxCount++;
+                //idxCount++;
             }
             if( hasTexCoords )
             {
                 tess->triangulated_index.push_back( 2*idx );
-                idxCount++;
+                //idxCount++;
             }
 
             tess->triangulated_index.push_back( 3*idx );
@@ -385,8 +385,8 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, uin
 
             int verts = 6;
             idxCount += verts;
-            if( hasnormals ) idxCount += verts;
-            if( hasTexCoords ) idxCount += verts;
+            //if( hasnormals ) idxCount += verts;
+            //if( hasTexCoords ) idxCount += verts;
 
             triCount += 2;
         }
@@ -464,13 +464,13 @@ void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess,
             if( hasnormals )
             {
                 tess->triangulated_index.push_back( curIdx * 3 );
-                idxCount++;
+                //idxCount++;
             }
 
             if( hasTexCoords )
             {
                 tess->triangulated_index.push_back( curIdx * 2 );
-                idxCount++;
+                //idxCount++;
             }
 
             tess->triangulated_index.push_back( curIdx * 3 );
@@ -533,8 +533,8 @@ void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess,
 
             int verts = 6;
             idxCount += verts;
-            if( hasnormals ) idxCount += verts;
-            if( hasTexCoords ) idxCount += verts;
+            //if( hasnormals ) idxCount += verts;
+            //if( hasTexCoords ) idxCount += verts;
 
             triCount += 2;
         }
