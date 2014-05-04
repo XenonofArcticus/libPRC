@@ -300,27 +300,6 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, uin
     PRCTessFace *tessFace = new PRCTessFace();
     tessFace->number_of_texture_coordinate_indexes = hasTexCoords ? 1 : 0;
 
-    // Tell the PRC tess face object what our entity type is.
-    switch( da->getMode() )
-    {
-    case GL_QUADS:
-        // Store quads as triangles.
-    case GL_TRIANGLES:
-        tessFace->used_entities_flag = hasTexCoords ? PRC_FACETESSDATA_TriangleTextured : PRC_FACETESSDATA_Triangle;
-        break;
-    case GL_TRIANGLE_FAN:
-        tessFace->used_entities_flag = hasTexCoords ? PRC_FACETESSDATA_TriangleFanTextured : PRC_FACETESSDATA_TriangleFan;
-        break;
-    case GL_TRIANGLE_STRIP:
-        tessFace->used_entities_flag = hasTexCoords ? PRC_FACETESSDATA_TriangleStripeTextured : PRC_FACETESSDATA_TriangleStripe;
-        break;
-    default:
-        std::cerr << "Unsupported mode " << std::hex << da->getMode() << std::dec << std::endl;
-        delete tessFace; // we don't need this face object.. destroy it
-        return;
-        break;
-    }
-
     // Add indices to the tess.
     uint32_t triCount = 0;
     uint32_t idxCount = 0;
@@ -418,20 +397,28 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, uin
     }
 
     // update our face object
-        switch( da->getMode() )
-        {
-        case GL_TRIANGLES:
-        case GL_QUADS:
-            tessFace->sizes_triangulated.push_back( triCount );
-            break;
-        case GL_TRIANGLE_FAN:
-        case GL_TRIANGLE_STRIP:
-            tessFace->sizes_triangulated.push_back( 1 );
-            tessFace->sizes_triangulated.push_back( idxCount );
-            break;
-        }
-    
-    
+    switch( da->getMode() )
+    {
+    case GL_TRIANGLES:
+    case GL_QUADS:
+        tessFace->used_entities_flag |= hasTexCoords ? PRC_FACETESSDATA_TriangleTextured : PRC_FACETESSDATA_Triangle;
+        tessFace->sizes_triangulated.push_back( triCount );
+        break;
+    case GL_TRIANGLE_STRIP:
+        tessFace->used_entities_flag |= hasTexCoords ? PRC_FACETESSDATA_TriangleStripeTextured : PRC_FACETESSDATA_TriangleStripe;
+        tessFace->sizes_triangulated.push_back( 1 );
+        tessFace->sizes_triangulated.push_back( idxCount );
+        break;
+    case GL_TRIANGLE_FAN:
+        tessFace->used_entities_flag |= hasTexCoords ? PRC_FACETESSDATA_TriangleFanTextured : PRC_FACETESSDATA_TriangleFan;
+        tessFace->sizes_triangulated.push_back( 1 );
+        tessFace->sizes_triangulated.push_back( idxCount );
+        break;
+    default:
+        std::cerr << "Unsupported mode " << std::hex << da->getMode() << std::dec << std::endl;
+        break;
+    }
+
     tessFace->start_triangulated = curIdxCount;
     tess->addTessFace( tessFace );
     tess->has_faces = true;
@@ -461,27 +448,6 @@ void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess,
 
     PRCTessFace *tessFace = new PRCTessFace();
     tessFace->number_of_texture_coordinate_indexes = hasTexCoords ? 1 : 0;
-
-    // Tell the PRC tess face object what our entity type is.
-    switch( de->getMode() )
-    {
-    case GL_QUADS:
-        // Store quads as triangles.
-    case GL_TRIANGLES:
-        tessFace->used_entities_flag = hasTexCoords ? PRC_FACETESSDATA_TriangleTextured : PRC_FACETESSDATA_Triangle;
-        break;
-    case GL_TRIANGLE_FAN:
-        tessFace->used_entities_flag = hasTexCoords ? PRC_FACETESSDATA_TriangleFanTextured : PRC_FACETESSDATA_TriangleFan;
-        break;
-    case GL_TRIANGLE_STRIP:
-        tessFace->used_entities_flag = hasTexCoords ? PRC_FACETESSDATA_TriangleStripeTextured : PRC_FACETESSDATA_TriangleStripe;
-        break;
-    default:
-        std::cerr << "Unsupported mode " << std::hex << de->getMode() << std::dec << std::endl;
-        delete tessFace; // we don't need this face object.. destroy it
-        return;
-        break;
-    }
 
     // Add indices to the tess.
     uint32_t triCount = 0;
@@ -579,21 +545,28 @@ void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess,
     }
 
     // update our face object
-    
     switch( de->getMode() )
     {
     case GL_TRIANGLES:
     case GL_QUADS:
+        tessFace->used_entities_flag |= hasTexCoords ? PRC_FACETESSDATA_TriangleTextured : PRC_FACETESSDATA_Triangle;
         tessFace->sizes_triangulated.push_back( triCount );
         break;
-    case GL_TRIANGLE_FAN:
     case GL_TRIANGLE_STRIP:
+        tessFace->used_entities_flag |= hasTexCoords ? PRC_FACETESSDATA_TriangleStripeTextured : PRC_FACETESSDATA_TriangleStripe;
         tessFace->sizes_triangulated.push_back( 1 );
         tessFace->sizes_triangulated.push_back( idxCount );
         break;
+    case GL_TRIANGLE_FAN:
+        tessFace->used_entities_flag |= hasTexCoords ? PRC_FACETESSDATA_TriangleFanTextured : PRC_FACETESSDATA_TriangleFan;
+        tessFace->sizes_triangulated.push_back( 1 );
+        tessFace->sizes_triangulated.push_back( idxCount );
+        break;
+    default:
+        std::cerr << "Unsupported mode " << std::hex << de->getMode() << std::dec << std::endl;
+        break;
     }
-    
-    
+
     tessFace->start_triangulated = curIdxCount;
     tess->addTessFace( tessFace );
     tess->has_faces = true;
