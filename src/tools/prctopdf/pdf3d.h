@@ -4,14 +4,14 @@
 class Pdf3d
 {
 public:
-	Pdf3d();
-	virtual ~Pdf3d();
+    Pdf3d();
+    virtual ~Pdf3d();
 
-	bool createAdvancedPdf( const char *filepdf, const char *fileprc, const char *filejs );
+    bool createAdvancedPdf( const char *filepdf, const char *fileprc, const char *filejs );
 
 protected:
-	float _rcleft, _rctop, _rcwidth, _rcheight;
-	float _bgr, _bgg, _bgb;
+    float _rcleft, _rctop, _rcwidth, _rcheight;
+    float _bgr, _bgg, _bgb;
 
 };
 

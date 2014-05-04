@@ -35,7 +35,7 @@ class OSG2PRC : public osg::NodeVisitor
 public:
     OSG2PRC();
 #ifdef PRC_USE_ASYMPTOTE
-	OSG2PRC( oPRCFile* prcFile );
+    OSG2PRC( oPRCFile* prcFile );
 #endif
     virtual ~OSG2PRC();
 
@@ -49,7 +49,7 @@ protected:
 
     void processNewNode( const std::string& name );
     void processTransformNode( const std::string& name, const osg::Matrix& matrix );
-	void finishNode();
+    void finishNode();
 
     static void processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, uint32_t& curIdxCount );
     static void processDrawArrayLengths( const osg::DrawArrayLengths* dal, PRC3DTess* tess, uint32_t& curIdxCount );
@@ -66,7 +66,7 @@ protected:
     void addDefaultMaterial();
 
 
-	PRC3DTess* createTess( const osg::Geometry* geom );
+    PRC3DTess* createTess( const osg::Geometry* geom );
 
 protected:
 #ifdef PRC_USE_ASYMPTOTE
@@ -77,7 +77,7 @@ protected:
             osgColor[ 1 ],osgColor[ 2 ],osgColor[ 3 ] ) );
     }
 
-	oPRCFile* _prcFile;
+    oPRCFile* _prcFile;
 
 #endif
 
