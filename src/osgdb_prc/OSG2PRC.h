@@ -67,6 +67,14 @@ protected:
     uint32_t getStyle() const;
     void addDefaultMaterial();
 
+    typedef std::vector< float > AlphaStack;
+    AlphaStack _nodeAlphaStack;
+    void pushNodeAlpha();
+    bool popNodeAlpha();
+    void setNodeAlpha( const float alpha );
+    float getNodeAlpha() const;
+    static bool checkNodeAlpha( float& alpha, const osg::Node* node );
+
 
     PRC3DTess* createTess( const osg::Geometry* geom );
 

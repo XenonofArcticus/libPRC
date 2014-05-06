@@ -14,6 +14,9 @@ OSG2PRC::OSG2PRC()
     : osg::NodeVisitor( osg::NodeVisitor::TRAVERSE_ALL_CHILDREN )
 {
     addDefaultMaterial();
+
+    pushNodeAlpha();
+    setNodeAlpha( 1.f );
 }
 
 #ifdef PRC_USE_ASYMPTOTE
@@ -22,6 +25,9 @@ OSG2PRC::OSG2PRC( oPRCFile* prcFile )
     _prcFile( prcFile )
 {
     addDefaultMaterial();
+
+    pushNodeAlpha();
+    setNodeAlpha( 1.f );
 }
 #endif
 
@@ -130,6 +136,55 @@ void OSG2PRC::addDefaultMaterial()
     // libPRC version
 #endif
 }
+
+void OSG2PRC::pushNodeAlpha()
+{
+    _nodeAlphaStack.resize( _nodeAlphaStack.size() + 1 );
+    if( _nodeAlphaStack.size() > 1 )
+    {
+        // Copy old top of stack to current top of stack.
+        _nodeAlphaStack[ _nodeAlphaStack.size() - 1 ] =
+            _nodeAlphaStack[ _nodeAlphaStack.size() - 2 ];
+    }
+}
+bool OSG2PRC::popNodeAlpha()
+{
+    if( _nodeAlphaStack.size() > 0 )
+    {
+        _nodeAlphaStack.resize( _nodeAlphaStack.size() - 1 );
+        return( true );
+    }
+    return( false );
+}
+void OSG2PRC::setNodeAlpha( const float alpha )
+{
+    if( _nodeAlphaStack.size() > 0 )
+        _nodeAlphaStack[ _nodeAlphaStack.size() - 1 ] = alpha;
+}
+float OSG2PRC::getNodeAlpha() const
+{
+    if( _nodeAlphaStack.size() > 0 )
+        return( _nodeAlphaStack[ _nodeAlphaStack.size() - 1 ] );
+    else
+        return( 1.f );
+}
+bool OSG2PRC::checkNodeAlpha( float& alpha, const osg::Node* node )
+{
+    const std::string targetString( "nodeAlpha=" );
+    for( unsigned int idx=0; idx < node->getNumDescriptions(); ++idx )
+    {
+        const std::string desc( node->getDescription( idx ) );
+        if( desc.substr( 0, targetString.size() ) == targetString )
+        {
+            alpha = 
+                atof( desc.substr( targetString.size() ).c_str() );
+            return( true );
+        }
+    }
+    return( false );
+}
+
+
 
 void OSG2PRC::apply( const osg::StateSet* stateSet )
 {
@@ -593,4 +648,5 @@ void OSG2PRC::finishNode()
     _prcFile->endgroup();
 
     popStyle();
+    popNodeAlpha();
 }
