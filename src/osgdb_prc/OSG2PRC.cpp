@@ -585,17 +585,17 @@ void OSG2PRC::processIndex( const unsigned int index, PRC3DTess* tess, PRCTessFa
         {
             const osg::Vec3Array* rgb( static_cast< const osg::Vec3Array* >( array ) );
             const osg::Vec3& c( (*rgb)[ useIndex ] );
-            tessFace->rgba_vertices.push_back( c.x() );
-            tessFace->rgba_vertices.push_back( c.y() );
-            tessFace->rgba_vertices.push_back( c.z() );
+            tessFace->rgba_vertices.push_back( (uint8_t)( c.x() * 255. ) );
+            tessFace->rgba_vertices.push_back( (uint8_t)( c.y() * 255. ) );
+            tessFace->rgba_vertices.push_back( (uint8_t)( c.z() * 255. ) );
         }
         {
             const osg::Vec4Array* rgba( static_cast< const osg::Vec4Array* >( array ) );
             const osg::Vec4& c( (*rgba)[ useIndex ] );
-            tessFace->rgba_vertices.push_back( c.x() );
-            tessFace->rgba_vertices.push_back( c.y() );
-            tessFace->rgba_vertices.push_back( c.z() );
-            tessFace->rgba_vertices.push_back( c.w() );
+            tessFace->rgba_vertices.push_back( (uint8_t)( c.x() * 255. ) );
+            tessFace->rgba_vertices.push_back( (uint8_t)( c.y() * 255. ) );
+            tessFace->rgba_vertices.push_back( (uint8_t)( c.z() * 255. ) );
+            tessFace->rgba_vertices.push_back( (uint8_t)( c.w() * 255. ) );
         }
     }
 }
