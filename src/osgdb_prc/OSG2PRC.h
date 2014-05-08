@@ -45,17 +45,20 @@ public:
 
 protected:
     void apply( const osg::StateSet* stateSet );
-    void apply( const osg::Geometry* geom );
 
     void processNewNode( const std::string& name );
     void processTransformNode( const std::string& name, const osg::Matrix& matrix );
     void finishNode();
 
-    static void apply( const osg::PrimitiveSet* ps, PRC3DTess* tess, PRCTessFace *tessFace );
+    void apply( const osg::Geometry* geom );
+    static void apply( const osg::PrimitiveSet* ps, PRC3DTess* tess, PRCTessFace *tessFace, const osg::Geometry* geom );
 
-    static void processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, PRCTessFace *tessFace );
-    static void processDrawArrayLengths( const osg::DrawArrayLengths* dal, PRC3DTess* tess, PRCTessFace *tessFace );
-    static void processDrawElements( const osg::DrawElements* de, PRC3DTess* tess, PRCTessFace *tessFace );
+    static void processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, PRCTessFace *tessFace, const osg::Geometry* geom );
+    static void processDrawArrayLengths( const osg::DrawArrayLengths* dal, PRC3DTess* tess, PRCTessFace *tessFace, const osg::Geometry* geom );
+    static void processDrawElements( const osg::DrawElements* de, PRC3DTess* tess, PRCTessFace *tessFace, const osg::Geometry* geom );
+
+    static void processIndex( const unsigned int index, PRC3DTess* tess, PRCTessFace *tessFace,
+                           const bool hasNormals, const bool hasTexCoords, const osg::Geometry* geom );
 
     typedef std::map< const osg::Material*, uint32_t > MaterialStyleMap;
     MaterialStyleMap _styles;
@@ -74,6 +77,8 @@ protected:
     void setNodeAlpha( const float alpha );
     float getNodeAlpha() const;
     static bool checkNodeAlpha( float& alpha, const osg::Node* node );
+
+    void processNodeAlpha( const osg::Node* node );
 
 
     PRC3DTess* createTess( const osg::Geometry* geom );

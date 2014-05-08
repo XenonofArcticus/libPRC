@@ -41,6 +41,7 @@ void OSG2PRC::apply( osg::Node& node )
     //std::cout << "Found osg::Node" << std::endl;
 
     processNewNode( node.getName() );
+    processNodeAlpha( &node );
 
     if( node.getStateSet() != NULL )
         apply( node.getStateSet() );
@@ -56,6 +57,7 @@ void OSG2PRC::apply( osg::Transform& trans )
     osg::Matrix m;
     trans.computeLocalToWorldMatrix( m, NULL );
     processTransformNode( trans.getName(), m );
+    processNodeAlpha( &trans );
 
     if( trans.getStateSet() != NULL )
         apply( trans.getStateSet() );
@@ -69,6 +71,7 @@ void OSG2PRC::apply( osg::Geode& geode )
     //std::cout << "Found osg::Geode" << std::endl;
 
     processNewNode( geode.getName() );
+    processNodeAlpha( &geode );
 
     if( geode.getStateSet() != NULL )
         apply( geode.getStateSet() );
@@ -267,7 +270,7 @@ void OSG2PRC::apply( const osg::Geometry* geom )
             const osg::PrimitiveSet* ps( geom->getPrimitiveSet( idx ) );
             if( ( ps->getMode() == GL_TRIANGLES ) ||
                     ( ps->getMode() == GL_QUADS ) )
-                apply( ps, tess, tessFace );
+                apply( ps, tess, tessFace, geom );
         }
     }
     // Triangle strips second
@@ -279,7 +282,7 @@ void OSG2PRC::apply( const osg::Geometry* geom )
         {
             const osg::PrimitiveSet* ps( geom->getPrimitiveSet( idx ) );
             if( ps->getMode() == GL_TRIANGLE_STRIP )
-                apply( ps, tess, tessFace );
+                apply( ps, tess, tessFace, geom );
         }
     }
     // Triangle fans third
@@ -291,9 +294,13 @@ void OSG2PRC::apply( const osg::Geometry* geom )
         {
             const osg::PrimitiveSet* ps( geom->getPrimitiveSet( idx ) );
             if( ps->getMode() == GL_TRIANGLE_FAN )
-                apply( ps, tess, tessFace );
+                apply( ps, tess, tessFace, geom );
         }
     }
+
+    // Set is_rgba=true if we have a color array and it's a Vec4Array.
+    tessFace->is_rgba = ( ( geom->getColorArray() != NULL ) &&
+        ( geom->getColorArray()->getType() == osg::Array::Vec4ArrayType ) );
 
     // Add the tessface. Note this zeros the tessFace pointer.
     tess->addTessFace( tessFace );
@@ -303,24 +310,24 @@ void OSG2PRC::apply( const osg::Geometry* geom )
     const uint32_t tess_index = _prcFile->add3DTess( tess );
     _prcFile->useMesh( tess_index, getStyle() );
 }
-void OSG2PRC::apply( const osg::PrimitiveSet* ps, PRC3DTess* tess, PRCTessFace *tessFace )
+void OSG2PRC::apply( const osg::PrimitiveSet* ps, PRC3DTess* tess, PRCTessFace *tessFace, const osg::Geometry* geom )
 {
     switch( ps->getType() ) {
     case osg::PrimitiveSet::DrawArraysPrimitiveType:
     {
-        processDrawArrays( static_cast< const osg::DrawArrays* >( ps ), tess, tessFace );
+        processDrawArrays( static_cast< const osg::DrawArrays* >( ps ), tess, tessFace, geom );
         break;
     }
     case osg::PrimitiveSet::DrawArrayLengthsPrimitiveType:
     {
-        processDrawArrayLengths( static_cast< const osg::DrawArrayLengths* >( ps ), tess, tessFace );
+        processDrawArrayLengths( static_cast< const osg::DrawArrayLengths* >( ps ), tess, tessFace, geom );
         break;
     }
     case osg::PrimitiveSet::DrawElementsUBytePrimitiveType:
     case osg::PrimitiveSet::DrawElementsUShortPrimitiveType:
     case osg::PrimitiveSet::DrawElementsUIntPrimitiveType:
     {
-        processDrawElements( static_cast< const osg::DrawElements* >( ps ), tess, tessFace );
+        processDrawElements( static_cast< const osg::DrawElements* >( ps ), tess, tessFace, geom );
         break;
     }
     }
@@ -335,7 +342,7 @@ PRC3DTess* OSG2PRC::createTess( const osg::Geometry* geom )
     const osg::Array* array( geom->getVertexArray() );
     if( array->getType() != osg::Array::Vec3ArrayType )
     {
-        std::cerr << "Unsupported array type." << std::endl;
+        std::cerr << "Vertex: Unsupported array type." << std::endl;
         delete tess;
         return NULL;
     }
@@ -356,7 +363,7 @@ PRC3DTess* OSG2PRC::createTess( const osg::Geometry* geom )
     {
         if( array->getType() != osg::Array::Vec3ArrayType )
         {
-            std::cerr << "Unsupported array type." << std::endl;
+            std::cerr << "Normal: Unsupported array type." << std::endl;
             delete tess;
             return NULL;
         }
@@ -389,7 +396,9 @@ PRC3DTess* OSG2PRC::createTess( const osg::Geometry* geom )
     }
     else
     {
-        // not sure what this is for no normals
+        // For future aupport. According to spec, crease_angle is
+        // used somehow when you set the flag to recalaulate normals.
+        // Our exporter currently doesn't do this.
         tess->crease_angle = 25.8419;  // arccos(0.9), default found in Acrobat output; 
     }
 
@@ -408,9 +417,9 @@ PRC3DTess* OSG2PRC::createTess( const osg::Geometry* geom )
     return tess;
 }
 
-void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, PRCTessFace *tessFace )
+void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, PRCTessFace *tessFace, const osg::Geometry* geom )
 {
-    const bool hasnormals( tess->normal_coordinate.size() > 0 );
+    const bool hasNormals( tess->normal_coordinate.size() > 0 );
     const bool hasTexCoords( tess->texture_coordinate.size() > 0 );
 
     // Add indices to the tess.
@@ -425,11 +434,7 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, PRC
     {
         for( unsigned int idx = first; idx < lastPlusOne; ++idx )
         {
-            if( hasnormals )
-                tess->triangulated_index.push_back( 3*idx );
-            if( hasTexCoords )
-                tess->triangulated_index.push_back( 2*idx );
-            tess->triangulated_index.push_back( 3*idx );
+            processIndex( idx, tess, tessFace, hasNormals, hasTexCoords, geom );
         }
 
         if( da->getMode() == GL_TRIANGLES )
@@ -450,42 +455,14 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, PRC
 
             // Two triangles, A and B
             //   Triangle A, verts 0, 1, 2
-            if( hasnormals )
-                tess->triangulated_index.push_back( curIdx0 * 3 );
-            if( hasTexCoords )
-                tess->triangulated_index.push_back( curIdx0 * 2 );
-            tess->triangulated_index.push_back( curIdx0 * 3 );
-
-            if( hasnormals )
-                tess->triangulated_index.push_back( curIdx1 * 3 );
-            if( hasTexCoords )
-                tess->triangulated_index.push_back( curIdx1 * 2 );
-            tess->triangulated_index.push_back( curIdx1 * 3 );
-
-            if( hasnormals )
-                tess->triangulated_index.push_back( curIdx2 * 3 );
-            if( hasTexCoords )
-                tess->triangulated_index.push_back( curIdx2 * 2 );
-            tess->triangulated_index.push_back( curIdx2 * 3 );
+            processIndex( curIdx0, tess, tessFace, hasNormals, hasTexCoords, geom );
+            processIndex( curIdx1, tess, tessFace, hasNormals, hasTexCoords, geom );
+            processIndex( curIdx2, tess, tessFace, hasNormals, hasTexCoords, geom );
 
             //   Triangle B, verts 0, 2, 3
-            if( hasnormals )
-                tess->triangulated_index.push_back( curIdx0 * 3 );
-            if( hasTexCoords )
-                tess->triangulated_index.push_back( curIdx0 * 2 );
-            tess->triangulated_index.push_back( curIdx0 * 3 );
-
-            if( hasnormals )
-                tess->triangulated_index.push_back( curIdx2 * 3 );
-            if( hasTexCoords )
-                tess->triangulated_index.push_back( curIdx2 * 2 );
-            tess->triangulated_index.push_back( curIdx2 * 3 );
-
-            if( hasnormals )
-                tess->triangulated_index.push_back( curIdx3 * 3 );
-            if( hasTexCoords )
-                tess->triangulated_index.push_back( curIdx3 * 2 );
-            tess->triangulated_index.push_back( curIdx3 * 3 );
+            processIndex( curIdx0, tess, tessFace, hasNormals, hasTexCoords, geom );
+            processIndex( curIdx2, tess, tessFace, hasNormals, hasTexCoords, geom );
+            processIndex( curIdx3, tess, tessFace, hasNormals, hasTexCoords, geom );
 
             triCount += 2;
         }
@@ -508,7 +485,7 @@ void OSG2PRC::processDrawArrays( const osg::DrawArrays* da, PRC3DTess* tess, PRC
         break;
     }
 }
-void OSG2PRC::processDrawArrayLengths( const osg::DrawArrayLengths* dal, PRC3DTess* tess, PRCTessFace *tessFace )
+void OSG2PRC::processDrawArrayLengths( const osg::DrawArrayLengths* dal, PRC3DTess* tess, PRCTessFace *tessFace, const osg::Geometry* geom )
 {
     std::cerr << "Warning: DrawArrayLengths not fully supported." << std::endl;
 
@@ -518,15 +495,15 @@ void OSG2PRC::processDrawArrayLengths( const osg::DrawArrayLengths* dal, PRC3DTe
     for( unsigned int idx=0; idx < dal->size(); ++idx )
     {
         da->setCount( (*dal)[ idx ] );
-        processDrawArrays( da.get(), tess, tessFace );
+        processDrawArrays( da.get(), tess, tessFace, geom );
         da->setFirst( da->getFirst() + (*dal)[ idx ] );
     }
 }
-void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess, PRCTessFace *tessFace )
+void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess, PRCTessFace *tessFace, const osg::Geometry* geom )
 {
     //std::cout << "Processing DrawElements." << std::endl;
 
-    const bool hasnormals( tess->normal_coordinate.size() > 0 );
+    const bool hasNormals( tess->normal_coordinate.size() > 0 );
     const bool hasTexCoords( tess->texture_coordinate.size() > 0 );
 
     // Add indices to the tess.
@@ -540,11 +517,7 @@ void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess,
         for( unsigned int idx = 0; idx < de->getNumIndices(); ++idx )
         {
             const unsigned int curIdx( de->index( idx ) );
-            if( hasnormals )
-                tess->triangulated_index.push_back( curIdx * 3 );
-            if( hasTexCoords )
-                tess->triangulated_index.push_back( curIdx * 2 );
-            tess->triangulated_index.push_back( curIdx * 3 );
+            processIndex( curIdx, tess, tessFace, hasNormals, hasTexCoords, geom );
         }
 
         if( de->getMode() == GL_TRIANGLES )
@@ -563,43 +536,15 @@ void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess,
             const unsigned int curIdx3( de->index( idx+3 ) );
 
             // Two triangles, A and B
-            //   Triangle A, verts 0, 1, 3
-            if( hasnormals )
-                tess->triangulated_index.push_back( curIdx0 * 3 );
-            if( hasTexCoords )
-                tess->triangulated_index.push_back( curIdx0 * 2 );
-            tess->triangulated_index.push_back( curIdx0 * 3 );
+            //   Triangle A, verts 0, 1, 2
+            processIndex( curIdx0, tess, tessFace, hasNormals, hasTexCoords, geom );
+            processIndex( curIdx1, tess, tessFace, hasNormals, hasTexCoords, geom );
+            processIndex( curIdx2, tess, tessFace, hasNormals, hasTexCoords, geom );
 
-            if( hasnormals )
-                tess->triangulated_index.push_back( curIdx1 * 3 );
-            if( hasTexCoords )
-                tess->triangulated_index.push_back( curIdx1 * 2 );
-            tess->triangulated_index.push_back( curIdx1 * 3 );
-
-            if( hasnormals )
-                tess->triangulated_index.push_back( curIdx3 * 3 );
-            if( hasTexCoords )
-                tess->triangulated_index.push_back( curIdx3 * 2 );
-            tess->triangulated_index.push_back( curIdx3 * 3 );
-
-            //   Triangle B, verts 3, 1, 2
-            if( hasnormals )
-                tess->triangulated_index.push_back( curIdx3 * 3 );
-            if( hasTexCoords )
-                tess->triangulated_index.push_back( curIdx3 * 2 );
-            tess->triangulated_index.push_back( curIdx3 * 3 );
-
-            if( hasnormals )
-                tess->triangulated_index.push_back( curIdx1 * 3 );
-            if( hasTexCoords )
-                tess->triangulated_index.push_back( curIdx1 * 2 );
-            tess->triangulated_index.push_back( curIdx1 * 3 );
-
-            if( hasnormals )
-                tess->triangulated_index.push_back( curIdx2 * 3 );
-            if( hasTexCoords )
-                tess->triangulated_index.push_back( curIdx2 * 2 );
-            tess->triangulated_index.push_back( curIdx2 * 3 );
+            //   Triangle B, verts 0, 2, 3
+            processIndex( curIdx0, tess, tessFace, hasNormals, hasTexCoords, geom );
+            processIndex( curIdx2, tess, tessFace, hasNormals, hasTexCoords, geom );
+            processIndex( curIdx3, tess, tessFace, hasNormals, hasTexCoords, geom );
 
             triCount += 2;
         }
@@ -623,6 +568,39 @@ void OSG2PRC::processDrawElements( const osg::DrawElements* de, PRC3DTess* tess,
     }
 }
 
+void OSG2PRC::processIndex( const unsigned int index, PRC3DTess* tess, PRCTessFace *tessFace,
+                           const bool hasNormals, const bool hasTexCoords, const osg::Geometry* geom )
+{
+    if( hasNormals )
+        tess->triangulated_index.push_back( index * 3 );
+    if( hasTexCoords )
+        tess->triangulated_index.push_back( index * 2 );
+    tess->triangulated_index.push_back( index * 3 );
+
+    const osg::Array* array( geom->getColorArray() );
+    if( array != NULL )
+    {
+        const unsigned int useIndex( ( array->getNumElements() > index ) ? index : 0 );
+        if( array->getType() == osg::Array::Vec3ArrayType )
+        {
+            const osg::Vec3Array* rgb( static_cast< const osg::Vec3Array* >( array ) );
+            const osg::Vec3& c( (*rgb)[ useIndex ] );
+            tessFace->rgba_vertices.push_back( c.x() );
+            tessFace->rgba_vertices.push_back( c.y() );
+            tessFace->rgba_vertices.push_back( c.z() );
+        }
+        {
+            const osg::Vec4Array* rgba( static_cast< const osg::Vec4Array* >( array ) );
+            const osg::Vec4& c( (*rgba)[ useIndex ] );
+            tessFace->rgba_vertices.push_back( c.x() );
+            tessFace->rgba_vertices.push_back( c.y() );
+            tessFace->rgba_vertices.push_back( c.z() );
+            tessFace->rgba_vertices.push_back( c.w() );
+        }
+    }
+}
+
+
 
 void OSG2PRC::processNewNode( const std::string& name )
 {
@@ -642,6 +620,13 @@ void OSG2PRC::processTransformNode( const std::string& name, const osg::Matrix& 
         d[3], d[7], d[11], d[15] );
 
     _prcFile->begingroup( name.c_str(), NULL, transpose.ptr());
+}
+void OSG2PRC::processNodeAlpha( const osg::Node* node )
+{
+    pushNodeAlpha();
+    float alpha;
+    if( checkNodeAlpha( alpha, node ) )
+        setNodeAlpha( alpha );
 }
 void OSG2PRC::finishNode()
 {
