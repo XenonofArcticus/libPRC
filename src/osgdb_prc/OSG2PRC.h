@@ -60,14 +60,12 @@ protected:
     static void processIndex( const unsigned int index, PRC3DTess* tess, PRCTessFace *tessFace,
                            const bool hasNormals, const bool hasTexCoords, const osg::Geometry* geom );
 
-    typedef std::map< const osg::Material*, uint32_t > MaterialStyleMap;
-    MaterialStyleMap _styles;
-    typedef std::vector< uint32_t > StyleStack;
-    StyleStack _styleStack;
-    void pushStyle();
-    bool popStyle();
-    void setStyle( const uint32_t style );
-    uint32_t getStyle() const;
+    typedef std::vector< osg::ref_ptr< const osg::Material > > MaterialStack;
+    MaterialStack _materialStack;
+    void pushMaterial();
+    bool popMaterial();
+    void setMaterial( const osg::Material* mat );
+    const osg::Material* getMaterial() const;
     void addDefaultMaterial();
 
     typedef std::vector< float > AlphaStack;
@@ -77,6 +75,11 @@ protected:
     void setNodeAlpha( const float alpha );
     float getNodeAlpha() const;
     static bool checkNodeAlpha( float& alpha, const osg::Node* node );
+
+    typedef std::pair< const osg::Material*, float > StyleAlphaKey;
+    typedef std::map< StyleAlphaKey, uint32_t > StyleAlphaMap;
+    StyleAlphaMap _styleAlphaMap;
+    uint32_t getStyle( const osg::Material* mat, const float alpha );
 
     void processNodeAlpha( const osg::Node* node );
 
