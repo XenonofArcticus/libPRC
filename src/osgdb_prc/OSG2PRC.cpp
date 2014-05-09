@@ -320,18 +320,21 @@ void OSG2PRC::apply( const osg::PrimitiveSet* ps, PRC3DTess* tess, PRCTessFace *
 /////////////////////////////////////////////////////////////////////////////////////////////
 PRC3DTess* OSG2PRC::createTess( const osg::Geometry* geom )
 {
-    PRC3DTess *tess = new PRC3DTess();
-
     const osg::Array* array( geom->getVertexArray() );
+    if( array == NULL )
+    {
+        std::cerr << "osg::Geometry has zero vertices." << std::endl;
+        return( NULL );
+    }
     if( array->getType() != osg::Array::Vec3ArrayType )
     {
         std::cerr << "Vertex: Unsupported array type." << std::endl;
-        delete tess;
-        return NULL;
+        return( NULL );
     }
     const osg::Vec3Array* vertices( static_cast< const osg::Vec3Array* >( array ) );
     //std::cout << "Adding vertex array to PRC, size " << array->getNumElements() << std::endl;
 
+    PRC3DTess *tess = new PRC3DTess();
     tess->coordinates.reserve( vertices->size()*3 );
     for( uint32_t i=0; i<vertices->size(); i++ )
     {
@@ -603,6 +606,8 @@ void OSG2PRC::processTransformNode( const std::string& name, const osg::Matrix& 
         d[3], d[7], d[11], d[15] );
 
     _prcFile->begingroup( name.c_str(), NULL, transpose.ptr());
+
+    pushMaterial();
 }
 void OSG2PRC::processNodeAlpha( const osg::Node* node )
 {
