@@ -11,7 +11,7 @@
 
 
 OSG2PRC::OSG2PRC()
-    : osg::NodeVisitor( osg::NodeVisitor::TRAVERSE_ALL_CHILDREN )
+    : osg::NodeVisitor( osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN )
 {
     addDefaultMaterial();
 
@@ -21,7 +21,7 @@ OSG2PRC::OSG2PRC()
 
 #ifdef PRC_USE_ASYMPTOTE
 OSG2PRC::OSG2PRC( oPRCFile* prcFile )
-  : osg::NodeVisitor( osg::NodeVisitor::TRAVERSE_ALL_CHILDREN ),
+  : osg::NodeVisitor( osg::NodeVisitor::TRAVERSE_ACTIVE_CHILDREN ),
     _prcFile( prcFile )
 {
     addDefaultMaterial();
