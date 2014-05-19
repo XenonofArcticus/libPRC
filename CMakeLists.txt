@@ -41,6 +41,26 @@ set( _osgComponents osgGA osgText osgViewer osgSim osgDB osgUtil osg OpenThreads
 find_package( OpenSceneGraph 2.8.5 COMPONENTS ${_osgComponents} )
 
 #
+# Optional Doxygen, for documentation.
+# add a custom target to build documentation.
+option( LIBPRC_DOCUMENTATION "Enable to create build target for Doxygen documentation." OFF )
+mark_as_advanced( CLEAR LIBPRC_DOCUMENTATION )
+if( LIBPRC_DOCUMENTATION )
+    find_package( Doxygen REQUIRED )
+    set( HAVE_DOT "NO" )
+    if( DOXYGEN_DOT_PATH )
+        set( HAVE_DOT "YES" )
+    endif( DOXYGEN_DOT_PATH )
+
+    configure_file( ${PROJECT_SOURCE_DIR}/doc/doxyfile.cmake
+        ${PROJECT_BINARY_DIR}/doc/doxyfile
+    )
+    add_custom_target( Documentation ${DOXYGEN_EXECUTABLE}
+        ${PROJECT_BINARY_DIR}/doc/doxyfile
+    )
+endif()
+
+#
 # Select asymptote (for dev and verification) or native libPRC.
 option( PRC_USE_ASYMPTOTE "Set to ON to use Asymptote instead of libPRC (testing/dev only)." ON )
 if( PRC_USE_ASYMPTOTE )

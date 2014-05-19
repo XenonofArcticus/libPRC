@@ -12,6 +12,10 @@
 #endif
 
 
+/** \class ReaderWriterPRC
+\brief TBD
+\details TBD
+*/
 class ReaderWriterPRC : public osgDB::ReaderWriter
 {
 public:
