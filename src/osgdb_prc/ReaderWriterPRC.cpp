@@ -13,8 +13,26 @@
 
 
 /** \class ReaderWriterPRC
-\brief TBD
-\details TBD
+\brief OSG plugin interface class.
+\details ReaderWriterPRC is the interface class for the osgdb_prc plugin.
+This plugin allows OSG-based apps to export a subset of OSG
+scene graph data as a PRC file.
+
+To use osgdb_prc, ensure the osgdb_prc DLL or shared object is
+in your system path. Then, in your OSG-based app, use the typical
+OSG interface for exporting a file.
+
+\code
+#include <osgDB\WriteFile>
+...
+osgDB::writeNodeFile( root, fileName );
+\endcode
+...where \c root is an osg::Node&, and \c fileName is a file name
+ending with ".prc".
+
+For information on OSG scene graph features supported during export,
+see OSG2PRC.
+
 */
 class ReaderWriterPRC : public osgDB::ReaderWriter
 {
@@ -70,3 +88,15 @@ public:
 
 
 REGISTER_OSGPLUGIN( prc, ReaderWriterPRC );
+
+
+/**
+
+\mainpage libPRC: a project for creating PRC files
+
+\section OSGSupport OSG support
+
+OSG-based applications can create PRC files using the osgdb_prc plugin.
+for more information, see ReaderWriterPRC.
+
+*/

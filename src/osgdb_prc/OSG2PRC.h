@@ -28,7 +28,45 @@ namespace osg {
 
 /** \class OSG2PRC OSG2PRC.h
 \brief OSG NodeVisitor that interfaces with libPRC.
-\details TBD
+\details OSG2PRC is invoked by ReaderWriterPRC to export an OSG
+scene graph to the PRC file format.
+
+Here are the OSG scene graph features currently supported, how they are
+stored in the PRC file, and how they affect rendering with current
+Adobe Reader.
+
+\li Node names. OSG2PRC preseves the scene graph hierarchical structure with node names.
+\li Transforms. Both osg::MatrixTransform and osg::PositionAttitudeTransform are supporeted.
+\li Materials. OSG2PRC stores osg::Material values as a PRC material (http://livedocs.adobe.com/acrobat_sdk/9/Acrobat9_HTMLHelp/API_References/PRCReference/PRC_Format_Specification/group___tf_material_generic_____serialize2.html)
+The PRC mesh objects created from osg::Geometry data reference the current
+PRC material corresponding to the current osg::Material. Note that the osg::StateAttribute
+OVERRIDE and PROTECTED modes are not currently supported.
+\li Geometry. Vertex and normal, and color data are stored as PRC mesh and tess
+objects. Only triangle, triangle strip, triangle fan, and quad primitives are supported.
+\li Geometry colors. If the Geometry object has a color array and the binding
+is OVERALL or PER_VERTEX, then the colors are stored in the PRC tess object.
+This causes Adobe Reader to disable lighting and ignore all material colors.
+The geometry is rendered as unlit and Gouraud-shaded. To render a model
+with lighting and shading effects, the application must remove Geometry
+colors or set the binding to PER_PRIMITIVE.
+\li Transparency. OSG2PRC supports per-node alpha. This is done with
+a plugin-specific description string. If a node contains a description string
+of the form: \c "nodeAlpha=<a>", then \c "<a>" is converted to a floating point
+number and stored (along with osg::Material values) in the PRC material
+object. Note that this alpha value affects transparency regardless of
+the presence of Geometry colors. Note also that, while alpha values stored in
+Geometry colors are stored in the PRC file, currently Adobe Reader appears
+to ignore them, instead taking its alpha value from the PRC material
+associated with the PRC mesh.
+
+There are several currently unsupported OSG features. Here are a
+couple that are noteworthy:
+
+\li Texture mapping. Texture objects and texture coordinate date are currently ignored.
+\li Quad strips.
+\li Line and point primitives.
+\li Polygon mode.
+\li osg::Depth.
 */
 class OSG2PRC : public osg::NodeVisitor
 {
