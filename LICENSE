@@ -1,3 +1,7 @@
+
+Note: The contents of the src/asymptote folder are a temporary private fork of Asymptote until our local changes can be contributed back to the master repository. Asymptote is licensed under GNU LGPL V3.
+
+
 The MIT License (MIT)
 
 Copyright (c) 2014 Chris 'Xenon' Hanson
@@ -19,3 +23,4 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
