@@ -44,10 +44,10 @@ Optionally you can run cmake from the command line with something
 like this:
 
 ```
-> cmake &lt;path_to_source&gt; \
-      -DOSG_DIR=&lt;path_to_osg&gt; \
-      -DZLIB_ROOT=&lt;path_to_zlib&gt; \
-      -DLIBHARU_ROOT=&lt;path_to_libharu&gt; \
-      -DPNG_PNG_INCLUDE_DIR=&lt;png_include_dir&gt; \
-      -DPNG_LIBRARY=&lt;png_library&gt;
+> cmake <path_to_source> \
+      -DOSG_DIR=<path_to_osg> \
+      -DZLIB_ROOT=<path_to_zlib> \
+      -DLIBHARU_ROOT=<path_to_libharu> \
+      -DPNG_PNG_INCLUDE_DIR=<png_include_dir> \
+      -DPNG_LIBRARY=<png_library>
 ```
