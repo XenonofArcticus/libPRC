@@ -2,7 +2,7 @@
 #ifndef __OSG_2_PRC_H__
 #define __OSG_2_PRC_H__ 1
 
-#include <osg\NodeVisitor>
+#include <osg/NodeVisitor>
 
 #ifdef PRC_USE_ASYMPTOTE
 #  include <oPRCFile.h>

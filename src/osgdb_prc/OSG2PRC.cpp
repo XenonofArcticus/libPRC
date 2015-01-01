@@ -1,5 +1,5 @@
 
-#include "osg2prc.h"
+#include "OSG2PRC.h"
 
 #include <osg/Transform>
 #include <osg/Geode>
