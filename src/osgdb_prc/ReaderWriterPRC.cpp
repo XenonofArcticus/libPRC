@@ -59,14 +59,14 @@ public:
 #ifdef PRC_USE_ASYMPTOTE
         oPRCFile* prcFile( new oPRCFile( ostr ) );
         if( prcFile == NULL )
-            return( "NULL prcFile." );
+          return( std::string("NULL prcFile.") );
 
         osg::Node* nonConstNode( const_cast< osg::Node* >( &node ) );
         OSG2PRC osg2prc( prcFile );
         nonConstNode->accept( osg2prc );
 
         if( !( prcFile->finish() ) )
-            return( "prcFile::finish() returned false." );
+          return( std::string("prcFile::finish() returned false.") );
 
         return( osgDB::ReaderWriter::WriteResult::FILE_SAVED );
 #else
